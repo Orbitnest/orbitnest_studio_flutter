@@ -1,0 +1,175 @@
+import 'package:dio/dio.dart';
+import '../auth/services/token_manager.dart';
+import 'interceptors/auth_interceptor.dart';
+import 'interceptors/error_interceptor.dart';
+import 'interceptors/logging_interceptor.dart';
+
+/// HTTP client for OrbitNest Studio API calls
+class OrbitNestHttpClient {
+  late final Dio _dio;
+  final String baseUrl;
+  final TokenManager _tokenManager;
+
+  OrbitNestHttpClient({
+    required this.baseUrl,
+    required TokenManager tokenManager,
+  }) : _tokenManager = tokenManager {
+    _dio = Dio(BaseOptions(
+      baseUrl: baseUrl,
+      connectTimeout: const Duration(seconds: 30),
+      receiveTimeout: const Duration(seconds: 30),
+      sendTimeout: const Duration(seconds: 30),
+      headers: {
+        'Content-Type': 'application/json',
+        'Accept': 'application/json',
+        // Security headers
+        'X-Requested-With': 'XMLHttpRequest',
+        'X-Client-Info': 'orbitnest_studio_flutter/1.0.0',
+        'Cache-Control': 'no-cache, no-store, must-revalidate',
+        'Pragma': 'no-cache',
+        'Expires': '0',
+      },
+      // Additional security options
+      validateStatus: (status) {
+        // Accept standard HTTP success codes only
+        return status != null && status >= 200 && status < 300;
+      },
+      followRedirects: false, // Prevent automatic redirects for security
+      maxRedirects: 0,
+    ));
+
+    _setupInterceptors();
+  }
+
+  void _setupInterceptors() {
+    _dio.interceptors.addAll([
+      AuthInterceptor(_tokenManager),
+      ErrorInterceptor(),
+      LoggingInterceptor(),
+    ]);
+  }
+
+  /// Get request
+  Future<Response<T>> get<T>(
+    String path, {
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    return await _dio.get<T>(
+      path,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+      onReceiveProgress: onReceiveProgress,
+    );
+  }
+
+  /// Post request
+  Future<Response<T>> post<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    return await _dio.post<T>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+  }
+
+  /// Put request
+  Future<Response<T>> put<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    return await _dio.put<T>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+  }
+
+  /// Delete request
+  Future<Response<T>> delete<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+  }) async {
+    return await _dio.delete<T>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+    );
+  }
+
+  /// Patch request
+  Future<Response<T>> patch<T>(
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    return await _dio.patch<T>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options,
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+  }
+
+  /// Generic request method
+  Future<Response<T>> request<T>(
+    String method,
+    String path, {
+    dynamic data,
+    Map<String, dynamic>? queryParameters,
+    Options? options,
+    CancelToken? cancelToken,
+    ProgressCallback? onSendProgress,
+    ProgressCallback? onReceiveProgress,
+  }) async {
+    return await _dio.request<T>(
+      path,
+      data: data,
+      queryParameters: queryParameters,
+      options: options?.copyWith(method: method) ?? Options(method: method),
+      cancelToken: cancelToken,
+      onSendProgress: onSendProgress,
+      onReceiveProgress: onReceiveProgress,
+    );
+  }
+
+  /// Close the client and clean up resources
+  void close({bool force = false}) {
+    _dio.close(force: force);
+  }
+}
