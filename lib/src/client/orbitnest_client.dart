@@ -51,11 +51,11 @@ class OrbitNestClient {
     required String projectId,
     required String anonKey,
     String? serviceRoleKey,
-  }) : _baseUrl = baseUrl,
-       _projectSlug = projectSlug,
-       _projectId = projectId,
-       _anonKey = anonKey,
-       _serviceRoleKey = serviceRoleKey {
+  })  : _baseUrl = baseUrl,
+        _projectSlug = projectSlug,
+        _projectId = projectId,
+        _anonKey = anonKey,
+        _serviceRoleKey = serviceRoleKey {
     _initialize();
   }
 
@@ -116,12 +116,12 @@ class OrbitNestClient {
       httpClient: _httpClient,
       projectId: _projectId,
     );
-    
+
     _databaseService = DatabaseService(
       httpClient: _httpClient,
       projectId: _projectId,
     );
-    
+
     _functionsService = FunctionsService(
       httpClient: _httpClient,
       projectSlug: _projectSlug,
@@ -131,14 +131,15 @@ class OrbitNestClient {
     // Initialize repositories
     _authRepository = AuthRepository(authService: _authService);
     _databaseRepository = DatabaseRepository(databaseService: _databaseService);
-    _functionsRepository = FunctionsRepository(functionsService: _functionsService);
+    _functionsRepository =
+        FunctionsRepository(functionsService: _functionsService);
 
     // Initialize BLoCs
     _authBloc = AuthBloc(
       authRepository: _authRepository,
       tokenManager: _tokenManager,
     );
-    
+
     _databaseBloc = DatabaseBloc(databaseRepository: _databaseRepository);
     _functionsBloc = FunctionsBloc(functionsRepository: _functionsRepository);
 
@@ -156,6 +157,130 @@ class OrbitNestClient {
 
   /// Get the functions API (simplified interface)
   OrbitNestFunctions get functions => _functions;
+
+  // ============================
+  // Direct Function Methods (Supabase-style API)
+  // ============================
+
+  /// Invoke an edge function directly
+  /// Usage: orbitnest.function('my-function', params: {...})
+  Future<dynamic> function(
+    String functionName, {
+    dynamic params,
+    String method = 'POST',
+    Map<String, String>? headers,
+  }) async {
+    final response = await _functions.invoke(
+      functionName,
+      method: method,
+      body: params,
+      headers: headers,
+    );
+    return response.data;
+  }
+
+  // ============================
+  // Direct Database Methods (Supabase-style API)
+  // ============================
+
+  /// Select data from a table
+  /// Usage: orbitnest.select('users', filters: {'status': 'active'})
+  Future<List<Map<String, dynamic>>> select(
+    String table, {
+    String columns = '*',
+    Map<String, dynamic>? filters,
+    List<String>? orderBy,
+    int? limit,
+    int? offset,
+  }) async {
+    final response = await _database.select(
+      table,
+      columns: columns,
+      filters: filters,
+      orderBy: orderBy,
+      limit: limit,
+      offset: offset,
+    );
+    return response.data;
+  }
+
+  /// Insert data into a table
+  /// Usage: orbitnest.insert('users', {'name': 'John', 'email': 'john@example.com'})
+  Future<List<Map<String, dynamic>>> insert(
+    String table,
+    Map<String, dynamic> values, {
+    bool upsert = false,
+  }) async {
+    final response = await _database.insert(table, values, upsert: upsert);
+    return response.data;
+  }
+
+  /// Update data in a table
+  /// Usage: orbitnest.update('users', {'name': 'Jane'}, filters: {'id': 1})
+  Future<List<Map<String, dynamic>>> update(
+    String table,
+    Map<String, dynamic> values, {
+    required Map<String, dynamic> filters,
+  }) async {
+    final response = await _database.update(table, values, filters: filters);
+    return response.data;
+  }
+
+  /// Delete data from a table
+  /// Usage: orbitnest.delete('users', filters: {'id': 1})
+  Future<List<Map<String, dynamic>>> delete(
+    String table, {
+    required Map<String, dynamic> filters,
+  }) async {
+    final response = await _database.delete(table, filters: filters);
+    return response.data;
+  }
+
+  /// Execute raw SQL query
+  /// Usage: orbitnest.sql('SELECT * FROM users WHERE status = ?', parameters: ['active'])
+  Future<List<Map<String, dynamic>>> sql(
+    String query, {
+    List<dynamic>? parameters,
+  }) async {
+    final response = await _database.sql(query, parameters: parameters);
+    return response.data;
+  }
+
+  // ============================
+  // Direct Authentication Methods (Supabase-style API)
+  // ============================
+
+  /// Sign in with email and password
+  /// Usage: orbitnest.signIn('user@example.com', 'password')
+  Future<Map<String, dynamic>> signIn(String email, String password) async {
+    return await _auth.signInWithPassword(email: email, password: password);
+  }
+
+  /// Sign up with email and password
+  /// Usage: orbitnest.signUp('user@example.com', 'password')
+  Future<Map<String, dynamic>> signUp(String email, String password) async {
+    return await _auth.signUp(email: email, password: password);
+  }
+
+  /// Sign out the current user
+  /// Usage: orbitnest.signOut()
+  Future<void> signOut() async {
+    await _auth.signOut();
+  }
+
+  /// Get the current user
+  /// Usage: orbitnest.currentUser()
+  Map<String, dynamic>? currentUser() {
+    final user = _auth.currentUser;
+    return user?.toJson();
+  }
+
+  /// Get the current session
+  /// Usage: orbitnest.currentSession()
+  Map<String, dynamic>? currentSession() {
+    final session = _auth.currentSession;
+    return session?.toJson();
+  }
 
   /// Supabase-compatible query builder for database operations
   PostgrestQueryBuilder<Map<String, dynamic>> from(String table) {
