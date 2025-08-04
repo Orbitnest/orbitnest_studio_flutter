@@ -1,0 +1,41 @@
+targets:
+  $default:
+    builders:
+      freezed:
+        options:
+          # Enable union types and when methods
+          union: true
+          # Enable copyWith methods
+          copyWith: true
+          # Enable equal and hashCode methods
+          equal: true
+          # Enable toJson and fromJson methods
+          json: true
+          # Enable toString methods
+          toString: true
+          # Generate map methods
+          map: true
+          # Generate when methods
+          when: true
+        generate_for:
+          - lib/src/**/*.dart
+      json_serializable:
+        options:
+          # Generate explicit toJson and fromJson methods
+          explicit_to_json: true
+          # Include fields with null values in JSON
+          include_if_null: false
+          # Use field names as JSON keys
+          field_rename: none
+          # Check for required parameters
+          checked: true
+          # Create factories for classes
+          create_factory: true
+          # Create toJson methods
+          create_to_json: true
+          # Generate generic argument factories
+          generic_argument_factories: true
+          # Ignore @JsonKey(ignore: true) annotations
+          ignore_unannotated: false
+        generate_for:
+          - lib/src/**/*.dart
