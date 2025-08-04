@@ -108,13 +108,6 @@ final orbitnest = OrbitNestClient.create(
   projectUrl: 'https://custom-url.com',
   // Other values will come from .env
 );
-
-// Legacy method with explicit parameters
-final orbitnest = OrbitNestClient.createWithParams(
-  projectUrl: 'http://localhost:3001',
-  projectSlug: 'your-project-slug',
-  anonKey: 'your-anon-key',
-);
 ```
 
 ## 🎯 Direct Method API
@@ -1804,7 +1797,6 @@ Main client for interacting with OrbitNest Studio APIs.
 class OrbitNestClient {
   // Factory constructors
   factory OrbitNestClient.create({String? projectUrl, String? projectSlug, String? anonKey, String? serviceRoleKey});
-  factory OrbitNestClient.createWithParams({required String projectUrl, required String projectSlug, required String anonKey, String? serviceRoleKey});
   
   // Core services
   AuthBloc get auth;
