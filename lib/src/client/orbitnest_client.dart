@@ -81,23 +81,6 @@ class OrbitNestClient {
     );
   }
 
-  /// Create a new OrbitNest client with explicit parameters (legacy method)
-  factory OrbitNestClient.createWithParams({
-    required String projectUrl,
-    required String projectSlug,
-    required String anonKey,
-    String? serviceRoleKey,
-    String? projectId,
-  }) {
-    return OrbitNestClient._(
-      baseUrl: projectUrl,
-      projectSlug: projectSlug,
-      projectId: projectId ?? projectSlug,
-      anonKey: anonKey,
-      serviceRoleKey: serviceRoleKey,
-    );
-  }
-
   void _initialize() {
     // Initialize token manager
     _tokenManager = TokenManager(
