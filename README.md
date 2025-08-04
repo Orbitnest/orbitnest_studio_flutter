@@ -1,30 +1,32 @@
 # OrbitNest Studio Flutter
 
-A secure, comprehensive Flutter client for OrbitNest Studio - A powerful Supabase-compatible backend as a service. This package provides a drop-in replacement for Supabase with the BLoC pattern for reactive state management, offering enterprise-grade authentication, database operations, and edge functions with advanced security features.
+A secure, comprehensive Flutter client for OrbitNest Studio - A powerful Supabase-compatible backend as a service. This package provides a drop-in replacement for Supabase with direct method access for seamless developer experience, powered by the BLoC pattern behind the scenes for reactive state management.
 
 ## 🚀 Features
 
 - **🔐 Authentication**: Complete authentication system with email/password, OTP, and session management
-- **🗄️ Database Operations**: Full CRUD operations with Supabase-compatible query builder and RLS support
-- **⚡ Edge Functions**: Complete edge function management, invocation, and environment variables
-- **🎯 BLoC Pattern**: Reactive state management using flutter_bloc for predictable UI updates
+- **🗄️ Database Operations**: CRUD operations with Supabase-compatible query builder
+- **⚡ Edge Functions**: Function invocation with support for GET, POST, PUT, DELETE methods
+- **🎯 Direct Method Access**: Supabase-style API with simple, intuitive method calls
 - **🔄 Supabase Compatibility**: Drop-in replacement with identical APIs for easy migration
 - **🔑 Token Management**: Secure JWT token storage with automatic refresh and expiration handling
 - **🛡️ Type Safety**: Full null-safety with Freezed models and comprehensive error handling
 - **🌐 HTTP Client**: Robust Dio-based HTTP client with interceptors for auth, errors, and logging
 - **🌍 Environment Configuration**: Secure configuration management with .env support
-- **📱 Production Ready**: Comprehensive error handling, logging, and monitoring capabilities
+- **📱 Production Ready**: Comprehensive error handling and monitoring capabilities
 - **🔒 Enterprise Security**: Advanced token validation, secure storage, data sanitization, and security headers
+- **🎛️ Advanced BLoC Access**: Optional reactive state management for complex use cases
 
 ## 📋 Table of Contents
 
 - [Installation](#installation)
 - [Environment Setup](#environment-setup)
 - [Quick Start](#quick-start)
+- [Direct Method API](#direct-method-api)
 - [Authentication Guide](#authentication-guide)
 - [Database Operations](#database-operations)
 - [Edge Functions](#edge-functions)
-- [BLoC Pattern Implementation](#bloc-pattern-implementation)
+- [Advanced BLoC Usage](#advanced-bloc-usage)
 - [Error Handling](#error-handling)
 - [Security Features](#security-features)
 - [Migration from Supabase](#migration-from-supabase)
@@ -40,14 +42,15 @@ A secure, comprehensive Flutter client for OrbitNest Studio - A powerful Supabas
 - Authentication BLoC with events and states
 - Token management with secure storage
 - Authentication service and repository
-- Database models (PostgrestResponse, TableSchema)
+- Database models (PostgrestResponse)
 - Database BLoC with events and states
 - Supabase-compatible PostgrestQueryBuilder with full filter support
 - Database service and repository with CRUD operations
-- Edge functions models (FunctionResponse, EdgeFunction, etc.)
+- Edge functions models (FunctionResponse)
 - Edge functions BLoC with events and states
 - Edge functions service and repository
-- Function invocation and management capabilities
+- Function invocation capabilities (no management operations)
+- **Direct Method API** with Supabase-style method calls
 - Environment variable management
 - Main OrbitNestClient with database and functions integration
 - Constants and error codes
@@ -112,6 +115,208 @@ final orbitnest = OrbitNestClient.createWithParams(
   projectSlug: 'your-project-slug',
   anonKey: 'your-anon-key',
 );
+```
+
+## 🎯 Direct Method API
+
+OrbitNest provides a Supabase-style direct method API that makes it incredibly easy to work with your backend. No need to understand BLoCs - just call methods directly!
+
+### 🔐 Authentication
+
+```dart
+// Sign up a new user
+final authData = await orbitnest.signUp('user@example.com', 'password123');
+print('User: ${authData['user']}');
+
+// Sign in existing user
+final authData = await orbitnest.signIn('user@example.com', 'password123');
+print('Session: ${authData['session']}');
+
+// Sign out
+await orbitnest.signOut();
+
+// Get current user
+final user = orbitnest.currentUser();
+print('Current user: $user');
+```
+
+### 🗄️ Database Operations
+
+```dart
+// Select data from a table
+final users = await orbitnest.select('users', 
+  filters: {'status': 'active'},
+  orderBy: ['created_at'],
+  limit: 10,
+);
+
+// Insert new record
+final newUser = await orbitnest.insert('users', {
+  'name': 'John Doe',
+  'email': 'john@example.com',
+  'status': 'active',
+});
+
+// Update records
+final updatedUsers = await orbitnest.update('users', 
+  {'status': 'inactive'},
+  filters: {'id': 123},
+);
+
+// Delete records
+final deletedUsers = await orbitnest.delete('users',
+  filters: {'status': 'deleted'},
+);
+
+// Execute raw SQL
+final result = await orbitnest.sql(
+  'SELECT * FROM users WHERE created_at > ?',
+  parameters: ['2024-01-01'],
+);
+```
+
+### ⚡ Edge Functions
+
+```dart
+// Invoke a function
+final result = await orbitnest.function('send-email', params: {
+  'to': 'user@example.com',
+  'subject': 'Welcome!',
+  'message': 'Hello World',
+});
+
+// Access the functions API directly for more options
+final response = await orbitnest.functions.invoke('my-function',
+  method: 'POST',
+  body: {'data': 'value'},
+  headers: {'Custom-Header': 'value'},
+);
+```
+
+### 🎛️ Advanced Usage Examples
+
+#### Using the Query Builder (Supabase-compatible)
+
+```dart
+// Complex queries using the familiar Supabase syntax
+final users = await orbitnest
+  .from('users')
+  .select('id, name, profiles(*)')
+  .eq('status', 'active')
+  .gte('age', 18)
+  .order('created_at', ascending: false)
+  .limit(50)
+  .execute();
+```
+
+## 🎛️ Advanced BLoC Usage
+
+For complex applications that need reactive state management, you can access the underlying BLoCs directly:
+
+### When to Use BLoCs vs Direct Methods
+
+**Use Direct Methods When:**
+- Simple CRUD operations
+- One-time function calls
+- Straightforward authentication flows
+- Quick prototyping
+
+**Use BLoCs When:**
+- Building reactive UIs that respond to state changes
+- Complex state management across multiple widgets
+- Real-time updates and streaming
+- Advanced error handling and loading states
+
+### Accessing BLoCs Directly
+
+```dart
+import 'package:flutter_bloc/flutter_bloc.dart';
+
+// Listen to state changes through the simplified APIs
+orbitnest.auth.onAuthStateChange.listen((state) {
+  state.when(
+    authenticated: (user, session) => print('User signed in: ${user.email}'),
+    unauthenticated: () => print('User signed out'),
+    error: (message, code, details) => print('Auth error: $message'),
+    initial: () => print('Initial state'),
+    loading: () => print('Authentication in progress...'),
+    otpSent: (email, message, type) => print('OTP sent to $email'),
+    passwordResetSent: (email, message) => print('Password reset sent to $email'),
+    userUpdated: (user, message) => print('User updated: $message'),
+  );
+});
+
+orbitnest.database.onStateChange.listen((state) {
+  state.when(
+    dataSelected: (table, response) => print('Data selected from $table'),
+    dataInserted: (table, response) => print('Data inserted into $table'),
+    error: (message, code, table, query, hint, details) => print('DB error: $message'),
+    loading: () => print('Database operation in progress...'),
+    initial: () => {},
+    // Handle other states...
+  );
+});
+
+orbitnest.functions.onStateChange.listen((state) {
+  state.when(
+    invoked: (functionName, response) => print('Function $functionName executed'),
+    error: (message, code, functionName) => print('Function error: $message'),
+    initial: () => {},
+    loading: () => print('Function executing...'),
+  );
+});
+```
+
+### BlocBuilder Integration
+
+```dart
+class UserList extends StatelessWidget {
+  @override
+  Widget build(BuildContext context) {
+    return BlocBuilder<DatabaseBloc, DatabaseState>(
+      bloc: orbitnest.database.databaseBloc,
+      builder: (context, state) {
+        return state.when(
+          initial: () => Text('Ready to load data'),
+          loading: () => CircularProgressIndicator(),
+          dataSelected: (table, response) {
+            return ListView.builder(
+              itemCount: response.data.length,
+              itemBuilder: (context, index) {
+                final user = response.data[index];
+                return ListTile(
+                  title: Text(user['name']),
+                  subtitle: Text(user['email']),
+                );
+              },
+            );
+          },
+          error: (message, code, table, query, hint, details) {
+            return Text('Error: $message');
+          },
+          // Handle other states...
+        );
+      },
+    );
+  }
+}
+
+```dart
+// Function invocation
+final response = await orbitnest.functions.invoke(
+  'my-function',
+  body: {'param1': 'value1'},
+);
+
+// Database operations
+final users = await orbitnest.database.select('users');
+
+// Supabase-compatible query builder
+final response = await orbitnest
+    .from('users')
+    .select('id, name, email')
+    .eq('status', 'active')
+    .execute();
 ```
 
 ## 🔐 Authentication Guide
@@ -329,14 +534,24 @@ try {
   final result1 = await orbitnest.functions.call('my-function', params: {'key': 'value'});
   final result2 = await orbitnest.functions.post('api-endpoint', body: {'data': 'value'});
   final result3 = await orbitnest.functions.get('health-check');
+  final result4 = await orbitnest.functions.put('update-endpoint', body: {'update': 'data'});
+  final result5 = await orbitnest.functions.delete('remove-endpoint');
   
 } catch (e) {
   print('Function error: $e');
 }
 
-// Admin-only function management
-try {
-  // Create a new function (requires admin auth)
+// Direct BLoC usage for reactive UI
+orbitnest.functionsBloc.add(
+  FunctionsEvent.invoke(
+    functionName: 'process-payment',
+    method: 'POST',
+    body: {'amount': 100, 'currency': 'USD'},
+  ),
+);
+```
+
+**Note**: This package only supports function **invocation**. Function management operations (create, update, delete) are not supported and should be done through the OrbitNest Studio dashboard or admin APIs.
   final newFunction = await orbitnest.functions.create(
     name: 'process-payment',
     sourceCode: '''
@@ -379,7 +594,7 @@ void dispose() {
 
 ## 🗄️ Database Operations
 
-OrbitNest Studio provides a powerful, Supabase-compatible database interface with full CRUD operations, advanced filtering, and Row Level Security (RLS) support.
+OrbitNest Studio provides a powerful, Supabase-compatible database interface with **CRUD operations only** (Create, Read, Update, Delete). This package does not support database management operations such as creating tables, managing schemas, or RLS policies.
 
 ### Database Architecture
 
@@ -901,34 +1116,27 @@ final essentialData = await orbitnest
 
 ## ⚡ Edge Functions
 
-Edge Functions provide serverless compute capabilities with full management and invocation support through the BLoC pattern.
+Edge Functions provide serverless compute capabilities with **invocation-only support** through the BLoC pattern. This package does not support function management operations (create, update, delete) - only invocation.
 
 ### Edge Functions BLoC Implementation
 
 ```dart
-class FunctionManager extends StatefulWidget {
+class FunctionInvoker extends StatefulWidget {
   @override
-  _FunctionManagerState createState() => _FunctionManagerState();
+  _FunctionInvokerState createState() => _FunctionInvokerState();
 }
 
-class _FunctionManagerState extends State<FunctionManager> {
+class _FunctionInvokerState extends State<FunctionInvoker> {
   @override
   Widget build(BuildContext context) {
     return BlocListener<FunctionsBloc, FunctionsState>(
-      bloc: orbitnest.functions,
+      bloc: orbitnest.functionsBloc,
       listener: (context, state) {
         state.when(
           // Function invoked successfully
           invoked: (functionName, response) {
             ScaffoldMessenger.of(context).showSnackBar(
               SnackBar(content: Text('Function $functionName executed successfully')),
-            );
-          },
-          
-          // Function created
-          created: (function) {
-            ScaffoldMessenger.of(context).showSnackBar(
-              SnackBar(content: Text('Function ${function.name} created')),
             );
           },
           
@@ -945,9 +1153,6 @@ class _FunctionManagerState extends State<FunctionManager> {
           // Other states...
           initial: () {},
           loading: () {},
-          listed: (functions) {},
-          loaded: (function) {},
-          updated: (function) {},
           deleted: (functionName) {},
           logsLoaded: (functionName, logs) {},
           environmentVariablesListed: (variables) {},
@@ -993,9 +1198,40 @@ void invokeFunctionWithHeaders() {
 
 ## 🎯 BLoC Pattern Implementation
 
-OrbitNest Studio uses the BLoC pattern throughout for predictable state management. Here's how to implement it effectively:
+OrbitNest Studio uses the BLoC pattern throughout for predictable state management. **All BLoCs are exposed** through the main client, allowing you to access them directly for reactive state management:
 
-### 1. Provider Setup
+```dart
+// Access BLoCs directly
+final authBloc = orbitnest.authBloc;
+final databaseBloc = orbitnest.databaseBloc;
+final functionsBloc = orbitnest.functionsBloc;
+
+// Use simplified APIs (recommended for most cases)
+final auth = orbitnest.auth;
+final database = orbitnest.database;
+final functions = orbitnest.functions;
+```
+
+### 1. Direct BLoC Usage
+
+```dart
+// Direct BLoC operations for maximum control
+orbitnest.functionsBloc.add(
+  FunctionsEvent.invoke(
+    functionName: 'my-function',
+    body: {'param': 'value'},
+  ),
+);
+
+orbitnest.databaseBloc.add(
+  DatabaseEvent.select(
+    table: 'users',
+    columns: 'id, name, email',
+  ),
+);
+```
+
+### 2. Provider Setup
 
 ```dart
 class MyApp extends StatelessWidget {
@@ -1003,9 +1239,9 @@ class MyApp extends StatelessWidget {
   Widget build(BuildContext context) {
     return MultiBlocProvider(
       providers: [
-        BlocProvider.value(value: orbitnest.auth),
-        BlocProvider.value(value: orbitnest.database),
-        BlocProvider.value(value: orbitnest.functions),
+        BlocProvider.value(value: orbitnest.authBloc),
+        BlocProvider.value(value: orbitnest.databaseBloc),
+        BlocProvider.value(value: orbitnest.functionsBloc),
       ],
       child: MaterialApp(
         home: AuthStateBuilder(),
@@ -1015,7 +1251,7 @@ class MyApp extends StatelessWidget {
 }
 ```
 
-### 2. State Management Patterns
+### 3. State Management Patterns
 
 #### Listening to Multiple BLoCs
 

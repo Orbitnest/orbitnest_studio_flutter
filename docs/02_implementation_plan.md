@@ -2,7 +2,18 @@
 
 ## Overview
 
-This document outlines the comprehensive implementation plan for creating an OrbitNest Flutter package that serves as a drop-in replacement for Supabase. The package will use the BLoC pattern for state management and provide all the functionality needed to interact with the OrbitNest Studio backend.
+This document outlines the comprehensive implementation plan for creating an OrbitNest Flutter package that serves as a drop-in replacement for Supabase. The package will use the BLoC pattern for state management and provide essential functionality needed to interact with the OrbitNest Studio backend.
+
+**Scope**: This package focuses on **client-side operations only**:
+- **Authentication**: Complete user authentication system
+- **Database Operations**: CRUD operations (Create, Read, Update, Delete) only - no table management
+- **Edge Functions**: Function invocation only - no function management
+
+**Not Included**: 
+- Database management (creating tables, RLS policies, schema management)
+- Edge function management (creating, updating, deleting functions)
+- Logging and monitoring (server-side operations)
+- Admin operations
 
 ## Project Structure
 
@@ -1626,14 +1637,15 @@ class HomePage extends StatelessWidget {
 
 ## Success Criteria
 
-1. **Drop-in Replacement**: The package should work as a direct replacement for Supabase with minimal code changes
-2. **BLoC Pattern**: All state management should use the BLoC pattern consistently
-3. **Full Feature Parity**: Support all OrbitNest Studio features as documented in the API guide
+1. **Drop-in Replacement**: The package should work as a direct replacement for Supabase with minimal code changes for client operations
+2. **BLoC Pattern**: All state management should use the BLoC pattern consistently with **exposed BLoCs** for direct access
+3. **Core Feature Support**: Support all client-side OrbitNest Studio features (auth, database CRUD, function invocation)
 4. **Comprehensive Testing**: Minimum 90% code coverage with unit, widget, and integration tests
 5. **Performance**: Response times should be comparable to or better than Supabase
 6. **Documentation**: Complete API documentation and usage examples
 7. **Type Safety**: Full type safety with null-safety compliance
 8. **Error Handling**: Comprehensive error handling with meaningful error messages
+9. **Reactive State Management**: Easy access to BLoCs for reactive UI updates using patterns like `orbitnest.functionsBloc.add(...)` and `orbitnest.databaseBloc.add(...)`
 
 ## Migration Path from Supabase
 

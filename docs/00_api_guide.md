@@ -2,14 +2,23 @@
 
 ## Overview
 
-OrbitNest Studio Backend provides a Supabase-compatible platform for managing projects, authentication, databases, and edge functions. This documentation covers all available API endpoints with curl examples for frontend implementation.
+OrbitNest Studio Backend provides a Supabase-compatible platform for managing projects, authentication, databases, and edge functions. This documentation covers the **client-side API endpoints** that the Flutter package will interact with.
 
-**Key Features:**
+**Flutter Package Scope**: This package is designed for **client-side operations only**:
+- **Authentication**: User authentication, session management
+- **Database Operations**: CRUD operations (Create, Read, Update, Delete)
+- **Edge Functions**: Function invocation
+
+**Not Covered by Flutter Package**:
+- Admin/Project management (server-side)
+- Database schema management (server-side)
+- Edge function management (server-side)
+- Logging and monitoring (server-side)
+
+**Key Features for Client Package**:
 - **Dual API Keys**: Each project gets one anon key (client-side) and one service role key (server-side)
 - **Supabase Compatibility**: JWT-based authentication system compatible with Supabase client libraries
-- **Database Isolation**: Each project has its own PostgreSQL database with auth schema
 - **Secure Authentication**: Project-scoped access prevents cross-project data leaks
-- **Key Pair Replacement**: Creating new keys replaces both existing keys simultaneously
 
 **Base URL:** `http://localhost:3001`
 

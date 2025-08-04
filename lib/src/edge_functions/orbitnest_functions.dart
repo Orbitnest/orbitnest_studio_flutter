@@ -7,7 +7,7 @@ import 'models/function_response.dart';
 import 'exceptions/function_exception.dart';
 
 /// Simplified Edge Functions API that wraps the BLoC pattern
-/// Provides direct async methods for function invocation and management
+/// Provides direct async methods for function invocation only
 class OrbitNestFunctions extends ChangeNotifier {
   final FunctionsBloc _functionsBloc;
   late final StreamSubscription _stateSubscription;
@@ -29,37 +29,6 @@ class OrbitNestFunctions extends ChangeNotifier {
     state.when(
       invoked: (functionName, response) {
         _completePendingOperation('invoked', response);
-      },
-      created: (function) {
-        _completePendingOperation('created', function);
-      },
-      listed: (functions) {
-        _completePendingOperation('listed', functions);
-      },
-      loaded: (function) {
-        _completePendingOperation('loaded', function);
-      },
-      updated: (function) {
-        _completePendingOperation('updated', function);
-      },
-      deleted: (functionName) {
-        _completePendingOperation('deleted', functionName);
-      },
-      logsLoaded: (functionName, logs) {
-        _completePendingOperation('logs_loaded', logs);
-      },
-      environmentVariablesListed: (variables) {
-        _completePendingOperation('env_vars_listed', variables);
-      },
-      environmentVariableSet: (name, value) {
-        _completePendingOperation(
-            'env_var_set', {'name': name, 'value': value});
-      },
-      environmentVariableDeleted: (name) {
-        _completePendingOperation('env_var_deleted', name);
-      },
-      bulkEnvironmentVariablesSet: (count) {
-        _completePendingOperation('bulk_env_vars_set', count);
       },
       error: (message, code, functionName) {
         _completePendingOperationWithError('functions_error',
@@ -111,8 +80,10 @@ class OrbitNestFunctions extends ChangeNotifier {
       // Longer timeout for functions
       if (!completer.isCompleted) {
         _pendingOperations.remove(operationKey);
-        completer.completeError(
-            const FunctionException('Function operation timeout'));
+        completer.completeError(TimeoutException(
+          'Function invocation timed out',
+          const Duration(seconds: 60),
+        ));
       }
     });
 
@@ -207,122 +178,6 @@ class OrbitNestFunctions extends ChangeNotifier {
       method: 'DELETE',
       body: body,
       headers: headers,
-    );
-  }
-
-  // Admin-only function management methods
-
-  /// Create a new edge function (requires admin auth)
-  Future<EdgeFunction> create({
-    required String name,
-    String? description,
-    required String sourceCode,
-    Map<String, String>? environmentVariables,
-    Map<String, dynamic>? executionConfig,
-  }) async {
-    return await _executeWithCompleter<EdgeFunction>(
-      FunctionsEvent.create(
-        name: name,
-        description: description,
-        sourceCode: sourceCode,
-        environmentVariables: environmentVariables,
-        executionConfig: executionConfig,
-      ),
-    );
-  }
-
-  /// List all edge functions (requires admin auth)
-  Future<List<EdgeFunction>> list() async {
-    return await _executeWithCompleter<List<EdgeFunction>>(
-      const FunctionsEvent.list(),
-    );
-  }
-
-  /// Get a specific edge function (requires admin auth)
-  Future<EdgeFunction> getFunction(String name) async {
-    return await _executeWithCompleter<EdgeFunction>(
-      FunctionsEvent.get(name: name),
-    );
-  }
-
-  /// Update an edge function (requires admin auth)
-  Future<EdgeFunction> update({
-    required String name,
-    String? description,
-    String? sourceCode,
-    Map<String, String>? environmentVariables,
-    Map<String, dynamic>? executionConfig,
-  }) async {
-    return await _executeWithCompleter<EdgeFunction>(
-      FunctionsEvent.update(
-        name: name,
-        description: description,
-        sourceCode: sourceCode,
-        environmentVariables: environmentVariables,
-        executionConfig: executionConfig,
-      ),
-    );
-  }
-
-  /// Delete an edge function (requires admin auth)
-  Future<void> deleteFunction(String name) async {
-    await _executeWithCompleter<String>(
-      FunctionsEvent.delete(name: name),
-    );
-  }
-
-  /// Get function execution logs (requires admin auth)
-  Future<List<FunctionLogEntry>> getLogs({
-    required String name,
-    int? limit,
-    int? offset,
-  }) async {
-    return await _executeWithCompleter<List<FunctionLogEntry>>(
-      FunctionsEvent.getLogs(
-        name: name,
-        limit: limit,
-        offset: offset,
-      ),
-    );
-  }
-
-  // Environment variables management
-
-  /// List all environment variables (requires admin auth)
-  Future<List<EnvironmentVariable>> listEnvironmentVariables() async {
-    return await _executeWithCompleter<List<EnvironmentVariable>>(
-      const FunctionsEvent.listEnvironmentVariables(),
-    );
-  }
-
-  /// Set an environment variable (requires admin auth)
-  Future<Map<String, dynamic>> setEnvironmentVariable({
-    required String name,
-    required String value,
-    String? description,
-    bool isSecret = false,
-  }) async {
-    return await _executeWithCompleter<Map<String, dynamic>>(
-      FunctionsEvent.setEnvironmentVariable(
-        name: name,
-        value: value,
-        description: description,
-        isSecret: isSecret,
-      ),
-    );
-  }
-
-  /// Delete an environment variable (requires admin auth)
-  Future<void> deleteEnvironmentVariable(String name) async {
-    await _executeWithCompleter<String>(
-      FunctionsEvent.deleteEnvironmentVariable(name: name),
-    );
-  }
-
-  /// Set multiple environment variables at once (requires admin auth)
-  Future<int> setEnvironmentVariables(Map<String, String> variables) async {
-    return await _executeWithCompleter<int>(
-      FunctionsEvent.setBulkEnvironmentVariables(variables: variables),
     );
   }
 

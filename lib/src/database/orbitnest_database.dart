@@ -8,7 +8,7 @@ import 'services/query_builder.dart';
 import 'exceptions/database_exception.dart';
 
 /// Simplified Database API that wraps the BLoC pattern
-/// Provides direct async methods and Supabase-compatible query builder
+/// Provides direct async methods and Supabase-compatible query builder for CRUD operations only
 class OrbitNestDatabase extends ChangeNotifier {
   final DatabaseBloc _databaseBloc;
   final String _projectId;
@@ -34,46 +34,6 @@ class OrbitNestDatabase extends ChangeNotifier {
       sqlExecuted: (result, rowsAffected) {
         _completePendingOperation(
             'db_success', PostgrestResponse(data: result, count: rowsAffected));
-      },
-      tableCreated: (tableName) {
-        _completePendingOperation(
-            'db_success',
-            PostgrestResponse(data: [
-              {'table_name': tableName}
-            ]));
-      },
-      tablesLoaded: (tables) {
-        _completePendingOperation('db_success',
-            PostgrestResponse(data: tables.map((t) => t.toJson()).toList()));
-      },
-      schemaLoaded: (schema) {
-        _completePendingOperation(
-            'db_success', PostgrestResponse(data: [schema.toJson()]));
-      },
-      rlsUpdated: (tableName, enabled) {
-        _completePendingOperation(
-            'db_success',
-            PostgrestResponse(data: [
-              {'table_name': tableName, 'rls_enabled': enabled}
-            ]));
-      },
-      policyCreated: (tableName, policyName) {
-        _completePendingOperation(
-            'db_success',
-            PostgrestResponse(data: [
-              {'table_name': tableName, 'policy_name': policyName}
-            ]));
-      },
-      policiesLoaded: (tableName, policies) {
-        _completePendingOperation('db_success',
-            PostgrestResponse(data: policies.map((p) => p.toJson()).toList()));
-      },
-      policyDeleted: (tableName, policyName) {
-        _completePendingOperation(
-            'db_success',
-            PostgrestResponse(data: [
-              {'table_name': tableName, 'policy_name': policyName}
-            ]));
       },
       dataSelected: (table, response) {
         _completePendingOperation('db_success', response);
@@ -109,8 +69,8 @@ class OrbitNestDatabase extends ChangeNotifier {
             ]));
       },
       error: (message, code, table, query, hint, details) {
-        _completePendingOperationWithError(
-            'db_error', DatabaseException(message, code: code, table: table));
+        _completePendingOperationWithError('db_error',
+            DatabaseException(message, code: code, table: table, query: query));
       },
     );
   }
@@ -123,6 +83,7 @@ class OrbitNestDatabase extends ChangeNotifier {
     for (final completer in completers.values) {
       if (!completer.isCompleted) {
         completer.complete(result);
+        break; // Only complete the first one
       }
     }
   }
@@ -154,7 +115,10 @@ class OrbitNestDatabase extends ChangeNotifier {
     Timer(const Duration(seconds: 30), () {
       if (!completer.isCompleted) {
         _pendingOperations.remove(operationKey);
-        completer.completeError(const DatabaseException('Operation timeout'));
+        completer.completeError(TimeoutException(
+          'Database operation timed out',
+          const Duration(seconds: 30),
+        ));
       }
     });
 
@@ -177,7 +141,7 @@ class OrbitNestDatabase extends ChangeNotifier {
   }
 
   /// Select data from a table
-  Future<PostgrestResponse<List<Map<String, dynamic>>>> select(
+  Future<PostgrestResponse<Map<String, dynamic>>> select(
     String table, {
     String columns = '*',
     Map<String, dynamic>? filters,
@@ -199,11 +163,10 @@ class OrbitNestDatabase extends ChangeNotifier {
       ),
     );
 
-    return PostgrestResponse<List<Map<String, dynamic>>>(
-      data: [List<Map<String, dynamic>>.from(result.data)],
+    return PostgrestResponse<Map<String, dynamic>>(
+      data: List<Map<String, dynamic>>.from(result.data),
       count: result.count,
       error: result.error,
-      status: result.status,
     );
   }
 
@@ -222,19 +185,14 @@ class OrbitNestDatabase extends ChangeNotifier {
     );
 
     return PostgrestResponse<Map<String, dynamic>>(
-      data: [
-        result.data.isNotEmpty
-            ? Map<String, dynamic>.from(result.data.first as Map)
-            : <String, dynamic>{}
-      ],
+      data: List<Map<String, dynamic>>.from(result.data),
       count: result.count,
       error: result.error,
-      status: result.status,
     );
   }
 
   /// Update data in a table
-  Future<PostgrestResponse<List<Map<String, dynamic>>>> update(
+  Future<PostgrestResponse<Map<String, dynamic>>> update(
     String table,
     Map<String, dynamic> values, {
     required Map<String, dynamic> filters,
@@ -250,16 +208,15 @@ class OrbitNestDatabase extends ChangeNotifier {
       ),
     );
 
-    return PostgrestResponse<List<Map<String, dynamic>>>(
-      data: [List<Map<String, dynamic>>.from(result.data)],
+    return PostgrestResponse<Map<String, dynamic>>(
+      data: List<Map<String, dynamic>>.from(result.data),
       count: result.count,
       error: result.error,
-      status: result.status,
     );
   }
 
   /// Delete data from a table
-  Future<PostgrestResponse<List<Map<String, dynamic>>>> delete(
+  Future<PostgrestResponse<Map<String, dynamic>>> delete(
     String table, {
     required Map<String, dynamic> filters,
   }) async {
@@ -273,16 +230,15 @@ class OrbitNestDatabase extends ChangeNotifier {
       ),
     );
 
-    return PostgrestResponse<List<Map<String, dynamic>>>(
-      data: [List<Map<String, dynamic>>.from(result.data)],
+    return PostgrestResponse<Map<String, dynamic>>(
+      data: List<Map<String, dynamic>>.from(result.data),
       count: result.count,
       error: result.error,
-      status: result.status,
     );
   }
 
   /// Insert multiple records (bulk insert)
-  Future<PostgrestResponse<List<Map<String, dynamic>>>> insertMany(
+  Future<PostgrestResponse<Map<String, dynamic>>> insertMany(
     String table,
     List<Map<String, dynamic>> values,
   ) async {
@@ -293,41 +249,36 @@ class OrbitNestDatabase extends ChangeNotifier {
       ),
     );
 
-    return PostgrestResponse<List<Map<String, dynamic>>>(
-      data: [List<Map<String, dynamic>>.from(result.data)],
+    return PostgrestResponse<Map<String, dynamic>>(
+      data: List<Map<String, dynamic>>.from(result.data),
       count: result.count,
       error: result.error,
-      status: result.status,
     );
   }
 
   /// Update multiple records (bulk update)
-  Future<PostgrestResponse<List<Map<String, dynamic>>>> updateMany(
+  Future<PostgrestResponse<Map<String, dynamic>>> updateMany(
     String table,
     Map<String, dynamic> values, {
     required Map<String, dynamic> filters,
   }) async {
-    final filtersMap =
-        filters.map((key, value) => MapEntry(key, value.toString()));
-
     final result = await _executeWithCompleter<PostgrestResponse<dynamic>>(
       DatabaseEvent.bulkUpdate(
         table: table,
-        values: [values],
-        matchColumn: filtersMap.keys.first,
+        values: [values], // Convert single value map to list format
+        matchColumn: 'id', // Default match column
       ),
     );
 
-    return PostgrestResponse<List<Map<String, dynamic>>>(
-      data: [List<Map<String, dynamic>>.from(result.data)],
+    return PostgrestResponse<Map<String, dynamic>>(
+      data: List<Map<String, dynamic>>.from(result.data),
       count: result.count,
       error: result.error,
-      status: result.status,
     );
   }
 
   /// Delete multiple records (bulk delete)
-  Future<PostgrestResponse<List<Map<String, dynamic>>>> deleteMany(
+  Future<PostgrestResponse<Map<String, dynamic>>> deleteMany(
     String table, {
     required Map<String, dynamic> filters,
   }) async {
@@ -340,16 +291,15 @@ class OrbitNestDatabase extends ChangeNotifier {
       ),
     );
 
-    return PostgrestResponse<List<Map<String, dynamic>>>(
-      data: [List<Map<String, dynamic>>.from(result.data)],
+    return PostgrestResponse<Map<String, dynamic>>(
+      data: List<Map<String, dynamic>>.from(result.data),
       count: result.count,
       error: result.error,
-      status: result.status,
     );
   }
 
   /// Execute raw SQL query
-  Future<PostgrestResponse<List<Map<String, dynamic>>>> sql(
+  Future<PostgrestResponse<Map<String, dynamic>>> sql(
     String query, {
     List<dynamic>? parameters,
   }) async {
@@ -360,84 +310,10 @@ class OrbitNestDatabase extends ChangeNotifier {
       ),
     );
 
-    return PostgrestResponse<List<Map<String, dynamic>>>(
-      data: [List<Map<String, dynamic>>.from(result.data)],
-      count: result.count,
-      error: result.error,
-      status: result.status,
-    );
-  }
-
-  /// Enable Row Level Security on a table
-  Future<void> enableRLS(String table) async {
-    await _executeWithCompleter<PostgrestResponse<dynamic>>(
-      DatabaseEvent.enableRls(tableName: table),
-    );
-  }
-
-  /// Disable Row Level Security on a table
-  Future<void> disableRLS(String table) async {
-    await _executeWithCompleter<PostgrestResponse<dynamic>>(
-      DatabaseEvent.disableRls(tableName: table),
-    );
-  }
-
-  /// Create an RLS policy
-  Future<void> createPolicy({
-    required String table,
-    required String policyName,
-    required String operation,
-    required String definition,
-  }) async {
-    await _executeWithCompleter<PostgrestResponse<dynamic>>(
-      DatabaseEvent.createPolicy(
-        tableName: table,
-        policyName: policyName,
-        command: operation,
-        using: definition,
-      ),
-    );
-  }
-
-  /// Delete an RLS policy
-  Future<void> deletePolicy({
-    required String table,
-    required String policyName,
-  }) async {
-    await _executeWithCompleter<PostgrestResponse<dynamic>>(
-      DatabaseEvent.deletePolicy(
-        tableName: table,
-        policyName: policyName,
-      ),
-    );
-  }
-
-  /// Get table schema information
-  Future<PostgrestResponse<Map<String, dynamic>>> getTableSchema(
-      String table) async {
-    final result = await _executeWithCompleter<PostgrestResponse<dynamic>>(
-      DatabaseEvent.getTableSchema(tableName: table),
-    );
-
     return PostgrestResponse<Map<String, dynamic>>(
-      data: [Map<String, dynamic>.from(result.data as Map)],
+      data: List<Map<String, dynamic>>.from(result.data),
       count: result.count,
       error: result.error,
-      status: result.status,
-    );
-  }
-
-  /// List all tables
-  Future<PostgrestResponse<List<Map<String, dynamic>>>> listTables() async {
-    final result = await _executeWithCompleter<PostgrestResponse<dynamic>>(
-      const DatabaseEvent.listTables(),
-    );
-
-    return PostgrestResponse<List<Map<String, dynamic>>>(
-      data: [List<Map<String, dynamic>>.from(result.data)],
-      count: result.count,
-      error: result.error,
-      status: result.status,
     );
   }
 

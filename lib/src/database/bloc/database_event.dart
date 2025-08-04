@@ -2,7 +2,7 @@ import 'package:freezed_annotation/freezed_annotation.dart';
 
 part 'database_event.freezed.dart';
 
-/// Database events
+/// Database events for CRUD operations only
 @freezed
 class DatabaseEvent with _$DatabaseEvent {
   // SQL execution
@@ -10,48 +10,6 @@ class DatabaseEvent with _$DatabaseEvent {
     required String sql,
     List<dynamic>? parameters,
   }) = DatabaseExecuteSqlEvent;
-
-  // Table operations
-  const factory DatabaseEvent.createTable({
-    required String tableName,
-    required Map<String, String> columns,
-    List<String>? primaryKeys,
-    bool? enableRls,
-  }) = DatabaseCreateTableEvent;
-
-  const factory DatabaseEvent.listTables() = DatabaseListTablesEvent;
-
-  const factory DatabaseEvent.getTableSchema({
-    required String tableName,
-  }) = DatabaseGetTableSchemaEvent;
-
-  // RLS operations
-  const factory DatabaseEvent.enableRls({
-    required String tableName,
-  }) = DatabaseEnableRlsEvent;
-
-  const factory DatabaseEvent.disableRls({
-    required String tableName,
-  }) = DatabaseDisableRlsEvent;
-
-  // Policy operations
-  const factory DatabaseEvent.createPolicy({
-    required String tableName,
-    required String policyName,
-    required String command,
-    String? role,
-    String? using,
-    String? withCheck,
-  }) = DatabaseCreatePolicyEvent;
-
-  const factory DatabaseEvent.listPolicies({
-    required String tableName,
-  }) = DatabaseListPoliciesEvent;
-
-  const factory DatabaseEvent.deletePolicy({
-    required String tableName,
-    required String policyName,
-  }) = DatabaseDeletePolicyEvent;
 
   // CRUD operations (for query builder)
   const factory DatabaseEvent.select({
