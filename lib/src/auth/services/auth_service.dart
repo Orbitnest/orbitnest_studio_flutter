@@ -1,5 +1,6 @@
 import '../../client/http_client.dart';
 import '../../constants/endpoints.dart';
+import '../../constants/error_codes.dart';
 import '../models/auth_response.dart';
 import '../models/user.dart';
 import '../exceptions/auth_exception.dart';
@@ -12,8 +13,8 @@ class AuthService {
   AuthService({
     required OrbitNestHttpClient httpClient,
     required String projectId,
-  }) : _httpClient = httpClient,
-       _projectId = projectId;
+  })  : _httpClient = httpClient,
+        _projectId = projectId;
 
   /// Sign up with email (OTP-based)
   Future<AuthResponse> signUpWithEmail({
@@ -51,8 +52,19 @@ class AuthService {
         },
       );
 
-      return AuthResponse.fromJson(response.data);
+      try {
+        return AuthResponse.fromJson(response.data);
+      } catch (e) {
+        // If parsing fails, provide detailed error information
+        throw AuthException(
+          'Failed to parse authentication response: ${e.toString()}',
+          code: ErrorCodes.responseParseError,
+        );
+      }
     } catch (e) {
+      if (e is AuthException) {
+        rethrow; // Re-throw our custom parsing error
+      }
       throw AuthException.fromException(e);
     }
   }
@@ -89,8 +101,19 @@ class AuthService {
         },
       );
 
-      return AuthResponse.fromJson(response.data);
+      try {
+        return AuthResponse.fromJson(response.data);
+      } catch (e) {
+        // If parsing fails, provide detailed error information
+        throw AuthException(
+          'Failed to parse authentication response: ${e.toString()}',
+          code: ErrorCodes.responseParseError,
+        );
+      }
     } catch (e) {
+      if (e is AuthException) {
+        rethrow; // Re-throw our custom parsing error
+      }
       throw AuthException.fromException(e);
     }
   }

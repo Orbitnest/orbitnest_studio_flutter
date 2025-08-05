@@ -23,16 +23,26 @@ class Session {
   final String? providerRefreshToken;
 
   factory Session.fromJson(Map<String, dynamic> json) {
-    return Session(
-      accessToken: json['access_token'] as String,
-      refreshToken: json['refresh_token'] as String,
-      expiresIn: json['expires_in'] as int,
-      expiresAt: json['expires_at'] as int?,
-      tokenType: json['token_type'] as String,
-      user: User.fromJson(json['user'] as Map<String, dynamic>),
-      providerToken: json['provider_token'] as String?,
-      providerRefreshToken: json['provider_refresh_token'] as String?,
-    );
+    try {
+      return Session(
+        accessToken: json['access_token'] as String,
+        refreshToken: json['refresh_token'] as String,
+        expiresIn:
+            json['expires_in'] as int? ?? 900, // Default to 15 minutes if null
+        expiresAt: json['expires_at'] as int?,
+        tokenType: json['token_type'] as String? ??
+            'Bearer', // Default to 'Bearer' if null
+        user: User.fromJson(json['user'] as Map<String, dynamic>),
+        providerToken: json['provider_token'] as String?,
+        providerRefreshToken: json['provider_refresh_token'] as String?,
+      );
+    } catch (e, stackTrace) {
+      // Provide better error information for debugging
+      throw FormatException(
+          'Failed to parse Session from JSON: ${e.toString()}\n'
+          'JSON data: ${json.toString()}\n'
+          'Stack trace: ${stackTrace.toString()}');
+    }
   }
 
   Map<String, dynamic> toJson() {
