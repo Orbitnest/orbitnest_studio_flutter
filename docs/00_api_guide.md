@@ -2,25 +2,16 @@
 
 ## Overview
 
-OrbitNest Studio Backend provides a Supabase-compatible platform for managing projects, authentication, databases, and edge functions. This documentation covers the **client-side API endpoints** that the Flutter package will interact with.
+OrbitNest Studio Backend provides a Supabase-compatible platform for managing projects, authentication, databases, and edge functions. This documentation covers all available API endpoints with curl examples for frontend implementation.
 
-**Flutter Package Scope**: This package is designed for **client-side operations only**:
-- **Authentication**: User authentication, session management
-- **Database Operations**: CRUD operations (Create, Read, Update, Delete)
-- **Edge Functions**: Function invocation
-
-**Not Covered by Flutter Package**:
-- Admin/Project management (server-side)
-- Database schema management (server-side)
-- Edge function management (server-side)
-- Logging and monitoring (server-side)
-
-**Key Features for Client Package**:
+**Key Features:**
 - **Dual API Keys**: Each project gets one anon key (client-side) and one service role key (server-side)
 - **Supabase Compatibility**: JWT-based authentication system compatible with Supabase client libraries
+- **Database Isolation**: Each project has its own PostgreSQL database with auth schema
 - **Secure Authentication**: Project-scoped access prevents cross-project data leaks
+- **Key Pair Replacement**: Creating new keys replaces both existing keys simultaneously
 
-**Base URL:** `http://localhost:3001`
+**Base URL:** `http://localhost:3002`
 
 ## API URL Structure Overview
 
@@ -86,7 +77,7 @@ Content-Type: application/json
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/api/auth/request-verification \
+curl -X POST http://localhost:3002/api/auth/request-verification \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@orbitnest.io",
@@ -111,7 +102,7 @@ Complete the registration process with the verification code.
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/api/auth/signup \
+curl -X POST http://localhost:3002/api/auth/signup \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@orbitnest.io",
@@ -144,7 +135,7 @@ Sign in an existing admin user.
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/api/auth/signin \
+curl -X POST http://localhost:3002/api/auth/signin \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@orbitnest.io",
@@ -181,7 +172,7 @@ Authorization: Bearer {access_token}
 
 **Curl Example:**
 ```bash
-curl -X GET http://localhost:3001/api/auth/profile \
+curl -X GET http://localhost:3002/api/auth/profile \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -204,7 +195,7 @@ Refresh the access token using the refresh token.
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/api/auth/refresh \
+curl -X POST http://localhost:3002/api/auth/refresh \
   -H "Content-Type: application/json" \
   -d '{
     "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -234,7 +225,7 @@ Authorization: Bearer {access_token}
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/api/auth/signout \
+curl -X POST http://localhost:3002/api/auth/signout \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -270,7 +261,7 @@ Content-Type: application/json
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/api/auth/reset-password-request \
+curl -X POST http://localhost:3002/api/auth/reset-password-request \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@orbitnest.io"
@@ -307,7 +298,7 @@ Content-Type: application/json
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/api/auth/reset-password \
+curl -X POST http://localhost:3002/api/auth/reset-password \
   -H "Content-Type: application/json" \
   -d '{
     "email": "admin@orbitnest.io",
@@ -346,7 +337,7 @@ Content-Type: application/json
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/api/auth/change-password \
+curl -X POST http://localhost:3002/api/auth/change-password \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -398,7 +389,7 @@ Authorization: Bearer {access_token}
 
 **Curl Example:**
 ```bash
-curl -X GET http://localhost:3001/api/admin/admins \
+curl -X GET http://localhost:3002/api/admin/admins \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -426,7 +417,7 @@ Get a specific admin user by ID.
 
 **Curl Example:**
 ```bash
-curl -X GET http://localhost:3001/api/admin/admins/550e8400-e29b-41d4-a716-446655440000 \
+curl -X GET http://localhost:3002/api/admin/admins/550e8400-e29b-41d4-a716-446655440000 \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -438,7 +429,7 @@ Update an admin user's information.
 
 **Curl Example:**
 ```bash
-curl -X PATCH http://localhost:3001/api/admin/admins/550e8400-e29b-41d4-a716-446655440000 \
+curl -X PATCH http://localhost:3002/api/admin/admins/550e8400-e29b-41d4-a716-446655440000 \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -454,7 +445,7 @@ Delete an admin user.
 
 **Curl Example:**
 ```bash
-curl -X DELETE http://localhost:3001/api/admin/admins/550e8400-e29b-41d4-a716-446655440000 \
+curl -X DELETE http://localhost:3002/api/admin/admins/550e8400-e29b-41d4-a716-446655440000 \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -479,7 +470,7 @@ Content-Type: application/json
 
 **Curl Example:**
 ```bash
-curl -X PATCH http://localhost:3001/api/admin/admins/550e8400-e29b-41d4-a716-446655440000/password \
+curl -X PATCH http://localhost:3002/api/admin/admins/550e8400-e29b-41d4-a716-446655440000/password \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -513,7 +504,7 @@ Content-Type: application/json
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/api/admin/api-keys \
+curl -X POST http://localhost:3002/api/admin/api-keys \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -543,7 +534,7 @@ Get all API keys for the current admin.
 
 **Curl Example:**
 ```bash
-curl -X GET http://localhost:3001/api/admin/api-keys \
+curl -X GET http://localhost:3002/api/admin/api-keys \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -555,7 +546,7 @@ Delete an API key.
 
 **Curl Example:**
 ```bash
-curl -X DELETE http://localhost:3001/api/admin/api-keys/550e8400-e29b-41d4-a716-446655440001 \
+curl -X DELETE http://localhost:3002/api/admin/api-keys/550e8400-e29b-41d4-a716-446655440001 \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -1199,7 +1190,7 @@ When you create API keys, the response includes everything you need to connect t
 #### Quick Start Example
 ```bash
 # 1. Create a project (using admin token)
-PROJECT_RESPONSE=$(curl -X POST "http://localhost:3001/api/projects" \
+PROJECT_RESPONSE=$(curl -X POST "http://localhost:3002/api/projects" \
   -H "Authorization: Bearer {admin_token}" \
   -H "Content-Type: application/json" \
   -d '{"name": "My Project", "description": "Test project"}')
@@ -1208,7 +1199,7 @@ PROJECT_RESPONSE=$(curl -X POST "http://localhost:3001/api/projects" \
 PROJECT_ID=$(echo $PROJECT_RESPONSE | jq -r '.id')
 
 # 3. Create API keys - response includes both keys and URL!
-API_RESPONSE=$(curl -X POST "http://localhost:3001/api/projects/${PROJECT_ID}/api-keys" \
+API_RESPONSE=$(curl -X POST "http://localhost:3002/api/projects/${PROJECT_ID}/api-keys" \
   -H "Authorization: Bearer {admin_token}" \
   -H "Content-Type: application/json" \
   -d '{"name": "Main Keys"}')
@@ -1217,7 +1208,7 @@ API_RESPONSE=$(curl -X POST "http://localhost:3001/api/projects/${PROJECT_ID}/ap
 # {
 #   "anon_key": { "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." },
 #   "service_role_key": { "key": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." },
-#   "project_url": "http://localhost:3001/api/project/my_project_123",
+#   "project_url": "http://localhost:3002/api/project/my_project_123",
 #   "usage_examples": { ... }
 # }
 
@@ -1241,13 +1232,13 @@ If you already have your keys and project URL:
 
 **Client-Side (Frontend/Mobile):**
 ```bash
-curl -X GET "http://localhost:3001/api/project/your_project_slug/test-auth" \
+curl -X GET "http://localhost:3002/api/project/your_project_slug/test-auth" \
   -H "Authorization: Bearer your_anon_key"
 ```
 
 **Server-Side (Backend/Admin):**
 ```bash
-curl -X GET "http://localhost:3001/api/project/your_project_slug/test-auth" \
+curl -X GET "http://localhost:3002/api/project/your_project_slug/test-auth" \
   -H "Authorization: Bearer your_service_role_key"
 ```
 
@@ -1270,13 +1261,13 @@ Authorization: Bearer {anon_key_or_service_role_key}
 
 **With Anon Key (Client-Side):**
 ```bash
-curl -X GET http://localhost:3001/api/project/my_awesome_project/test-auth \
+curl -X GET http://localhost:3002/api/project/my_awesome_project/test-auth \
   -H "Authorization: Bearer {your_anon_key}"
 ```
 
 **With Service Role Key (Server-Side):**
 ```bash
-curl -X GET http://localhost:3001/api/project/my_awesome_project/test-auth \
+curl -X GET http://localhost:3002/api/project/my_awesome_project/test-auth \
   -H "Authorization: Bearer {your_service_role_key}"
 ```
 
@@ -1313,7 +1304,7 @@ Authorization: Bearer {anon_key_or_service_role_key}
 
 **Curl Example:**
 ```bash
-curl -X GET http://localhost:3001/api/project/my_awesome_project/info \
+curl -X GET http://localhost:3002/api/project/my_awesome_project/info \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -1367,7 +1358,7 @@ Authorization: Bearer {anon_key_or_service_role_key}
 
 **Curl Example:**
 ```bash
-curl -X GET http://localhost:3001/api/project/my_awesome_project/health \
+curl -X GET http://localhost:3002/api/project/my_awesome_project/health \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -1388,7 +1379,7 @@ curl -X GET http://localhost:3001/api/project/my_awesome_project/health \
 ```javascript
 // Initialize your client with anonymous key
 const anonKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
-const projectUrl = 'http://localhost:3001/api/project/my_awesome_project';
+const projectUrl = 'http://localhost:3002/api/project/my_awesome_project';
 
 // Make authenticated requests
 const response = await fetch(`${projectUrl}/info`, {
@@ -1404,7 +1395,7 @@ const response = await fetch(`${projectUrl}/info`, {
 ```javascript
 // Use service role key for server-side operations
 const serviceRoleKey = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...';
-const projectUrl = 'http://localhost:3001/api/project/my_awesome_project';
+const projectUrl = 'http://localhost:3002/api/project/my_awesome_project';
 
 // Make admin requests
 const response = await fetch(`${projectUrl}/info`, {
@@ -1461,7 +1452,7 @@ Common error responses for API key authentication:
 
 ```javascript
 // utils/orbitnest.js
-const PROJECT_URL = 'http://localhost:3001/api/project/my_awesome_project';
+const PROJECT_URL = 'http://localhost:3002/api/project/my_awesome_project';
 const ANON_KEY = 'your_anon_key_here';
 const SERVICE_ROLE_KEY = 'your_service_role_key_here'; // Server-side only!
 
@@ -1496,7 +1487,7 @@ export const adminClient = {
 // plugins/orbitnest.js
 import { ref } from 'vue'
 
-const projectUrl = 'http://localhost:3001/api/project/my_awesome_project'
+const projectUrl = 'http://localhost:3002/api/project/my_awesome_project'
 const anonKey = 'your_anon_key_here'
 
 export const useOrbitNest = () => {
@@ -1541,7 +1532,7 @@ export const useOrbitNest = () => {
 const express = require('express');
 const app = express();
 
-const PROJECT_URL = 'http://localhost:3001/api/project/my_awesome_project';
+const PROJECT_URL = 'http://localhost:3002/api/project/my_awesome_project';
 const SERVICE_ROLE_KEY = 'your_service_role_key_here';
 
 // Middleware to create OrbitNest client
@@ -1583,7 +1574,7 @@ from typing import Optional, Dict, Any
 
 class OrbitNestClient:
     def __init__(self, project_slug: str, api_key: str):
-        self.base_url = f"http://localhost:3001/api/project/{project_slug}"
+        self.base_url = f"http://localhost:3002/api/project/{project_slug}"
         self.headers = {
             "Authorization": f"Bearer {api_key}",
             "Content-Type": "application/json"
@@ -1635,7 +1626,7 @@ Create a `.env` file for your project:
 
 ```bash
 # .env
-ORBITNEST_PROJECT_URL=http://localhost:3001/api/project/my_awesome_project
+ORBITNEST_PROJECT_URL=http://localhost:3002/api/project/my_awesome_project
 ORBITNEST_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 ORBITNEST_SERVICE_ROLE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
 
@@ -1663,11 +1654,11 @@ All project authentication endpoints use the project ID or slug in the URL path.
 
 Begin the email-first registration flow.
 
-**Endpoint:** `POST /projects/{projectId}/auth/signup-with-email`
+**Endpoint:** `POST /api/projects/{projectId}/auth/signup-with-email`
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/projects/my_awesome_project/auth/signup-with-email \
+curl -X POST http://localhost:3002/api/projects/my_awesome_project/auth/signup-with-email \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com"
@@ -1687,11 +1678,11 @@ curl -X POST http://localhost:3001/projects/my_awesome_project/auth/signup-with-
 
 Complete registration with OTP and optional password.
 
-**Endpoint:** `POST /projects/{projectId}/auth/verify-signup`
+**Endpoint:** `POST /api/projects/{projectId}/auth/verify-signup`
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/projects/my_awesome_project/auth/verify-signup \
+curl -X POST http://localhost:3002/api/projects/my_awesome_project/auth/verify-signup \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -1720,11 +1711,11 @@ curl -X POST http://localhost:3001/projects/my_awesome_project/auth/verify-signu
 
 Start passwordless sign-in flow.
 
-**Endpoint:** `POST /projects/{projectId}/auth/signin-with-email`
+**Endpoint:** `POST /api/projects/{projectId}/auth/signin-with-email`
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/projects/my_awesome_project/auth/signin-with-email \
+curl -X POST http://localhost:3002/api/projects/my_awesome_project/auth/signin-with-email \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com"
@@ -1735,11 +1726,11 @@ curl -X POST http://localhost:3001/projects/my_awesome_project/auth/signin-with-
 
 Complete sign-in with OTP.
 
-**Endpoint:** `POST /projects/{projectId}/auth/verify-signin`
+**Endpoint:** `POST /api/projects/{projectId}/auth/verify-signin`
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/projects/my_awesome_project/auth/verify-signin \
+curl -X POST http://localhost:3002/api/projects/my_awesome_project/auth/verify-signin \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -1751,11 +1742,11 @@ curl -X POST http://localhost:3001/projects/my_awesome_project/auth/verify-signi
 
 Traditional registration with email and password.
 
-**Endpoint:** `POST /projects/{projectId}/auth/signup`
+**Endpoint:** `POST /api/projects/{projectId}/auth/signup`
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/projects/my_awesome_project/auth/signup \
+curl -X POST http://localhost:3002/api/projects/my_awesome_project/auth/signup \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -1767,11 +1758,11 @@ curl -X POST http://localhost:3001/projects/my_awesome_project/auth/signup \
 
 Traditional sign-in with email and password.
 
-**Endpoint:** `POST /projects/{projectId}/auth/signin`
+**Endpoint:** `POST /api/projects/{projectId}/auth/signin`
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/projects/my_awesome_project/auth/signin \
+curl -X POST http://localhost:3002/api/projects/my_awesome_project/auth/signin \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -1783,11 +1774,11 @@ curl -X POST http://localhost:3001/projects/my_awesome_project/auth/signin \
 
 Send recovery OTP to email.
 
-**Endpoint:** `POST /projects/{projectId}/auth/recover`
+**Endpoint:** `POST /api/projects/{projectId}/auth/recover`
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/projects/my_awesome_project/auth/recover \
+curl -X POST http://localhost:3002/api/projects/my_awesome_project/auth/recover \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com"
@@ -1798,11 +1789,11 @@ curl -X POST http://localhost:3001/projects/my_awesome_project/auth/recover \
 
 Reset password using OTP.
 
-**Endpoint:** `POST /projects/{projectId}/auth/reset-password`
+**Endpoint:** `POST /api/projects/{projectId}/auth/reset-password`
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/projects/my_awesome_project/auth/reset-password \
+curl -X POST http://localhost:3002/api/projects/my_awesome_project/auth/reset-password \
   -H "Content-Type: application/json" \
   -d '{
     "email": "user@example.com",
@@ -1815,11 +1806,11 @@ curl -X POST http://localhost:3001/projects/my_awesome_project/auth/reset-passwo
 
 Refresh access token.
 
-**Endpoint:** `POST /projects/{projectId}/auth/refresh`
+**Endpoint:** `POST /api/projects/{projectId}/auth/refresh`
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/projects/my_awesome_project/auth/refresh \
+curl -X POST http://localhost:3002/api/projects/my_awesome_project/auth/refresh \
   -H "Content-Type: application/json" \
   -d '{
     "refresh_token": "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
@@ -1832,7 +1823,7 @@ curl -X POST http://localhost:3001/projects/my_awesome_project/auth/refresh \
 
 Get the current user's profile.
 
-**Endpoint:** `GET /projects/{projectId}/auth/user`
+**Endpoint:** `GET /api/projects/{projectId}/auth/user`
 
 **Headers:**
 ```
@@ -1841,7 +1832,7 @@ Authorization: Bearer {project_access_token}
 
 **Curl Example:**
 ```bash
-curl -X GET http://localhost:3001/projects/my_awesome_project/auth/user \
+curl -X GET http://localhost:3002/api/projects/my_awesome_project/auth/user \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -1865,11 +1856,11 @@ curl -X GET http://localhost:3001/projects/my_awesome_project/auth/user \
 
 Update the current user's profile.
 
-**Endpoint:** `PUT /projects/{projectId}/auth/user`
+**Endpoint:** `PUT /api/projects/{projectId}/auth/user`
 
 **Curl Example:**
 ```bash
-curl -X PUT http://localhost:3001/projects/my_awesome_project/auth/user \
+curl -X PUT http://localhost:3002/api/projects/my_awesome_project/auth/user \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -1885,11 +1876,11 @@ curl -X PUT http://localhost:3001/projects/my_awesome_project/auth/user \
 
 Delete the current user's account.
 
-**Endpoint:** `DELETE /projects/{projectId}/auth/user`
+**Endpoint:** `DELETE /api/projects/{projectId}/auth/user`
 
 **Curl Example:**
 ```bash
-curl -X DELETE http://localhost:3001/projects/my_awesome_project/auth/user \
+curl -X DELETE http://localhost:3002/api/projects/my_awesome_project/auth/user \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -1897,11 +1888,11 @@ curl -X DELETE http://localhost:3001/projects/my_awesome_project/auth/user \
 
 Sign out the current user.
 
-**Endpoint:** `POST /projects/{projectId}/auth/signout`
+**Endpoint:** `POST /api/projects/{projectId}/auth/signout`
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/projects/my_awesome_project/auth/signout \
+curl -X POST http://localhost:3002/api/projects/my_awesome_project/auth/signout \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -1909,11 +1900,11 @@ curl -X POST http://localhost:3001/projects/my_awesome_project/auth/signout \
 
 Sign out from all devices.
 
-**Endpoint:** `POST /projects/{projectId}/auth/signout-all`
+**Endpoint:** `POST /api/projects/{projectId}/auth/signout-all`
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/projects/my_awesome_project/auth/signout-all \
+curl -X POST http://localhost:3002/api/projects/my_awesome_project/auth/signout-all \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -1923,7 +1914,7 @@ curl -X POST http://localhost:3001/projects/my_awesome_project/auth/signout-all 
 
 List all users in the project.
 
-**Endpoint:** `GET /projects/{projectId}/auth/admin/users`
+**Endpoint:** `GET /api/projects/{projectId}/auth/admin/users`
 
 **Headers:**
 ```
@@ -1932,7 +1923,7 @@ Authorization: Bearer {service_role_key}
 
 **Curl Example:**
 ```bash
-curl -X GET "http://localhost:3001/projects/my_awesome_project/auth/admin/users?page=1&limit=50&search=john" \
+curl -X GET "http://localhost:3002/api/projects/my_awesome_project/auth/admin/users?page=1&limit=50&search=john" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -1940,11 +1931,11 @@ curl -X GET "http://localhost:3001/projects/my_awesome_project/auth/admin/users?
 
 Create a new user account as admin.
 
-**Endpoint:** `POST /projects/{projectId}/auth/admin/users`
+**Endpoint:** `POST /api/projects/{projectId}/auth/admin/users`
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/projects/my_awesome_project/auth/admin/users \
+curl -X POST http://localhost:3002/api/projects/my_awesome_project/auth/admin/users \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -1961,11 +1952,11 @@ curl -X POST http://localhost:3001/projects/my_awesome_project/auth/admin/users 
 
 Get authentication statistics.
 
-**Endpoint:** `GET /projects/{projectId}/auth/admin/stats`
+**Endpoint:** `GET /api/projects/{projectId}/auth/admin/stats`
 
 **Curl Example:**
 ```bash
-curl -X GET http://localhost:3001/projects/my_awesome_project/auth/admin/stats \
+curl -X GET http://localhost:3002/api/projects/my_awesome_project/auth/admin/stats \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -1973,11 +1964,11 @@ curl -X GET http://localhost:3001/projects/my_awesome_project/auth/admin/stats \
 
 Get authentication configuration.
 
-**Endpoint:** `GET /projects/{projectId}/auth/admin/config`
+**Endpoint:** `GET /api/projects/{projectId}/auth/admin/config`
 
 **Curl Example:**
 ```bash
-curl -X GET http://localhost:3001/projects/my_awesome_project/auth/admin/config \
+curl -X GET http://localhost:3002/api/projects/my_awesome_project/auth/admin/config \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -1985,11 +1976,11 @@ curl -X GET http://localhost:3001/projects/my_awesome_project/auth/admin/config 
 
 Update authentication configuration.
 
-**Endpoint:** `PUT /projects/{projectId}/auth/admin/config`
+**Endpoint:** `PUT /api/projects/{projectId}/auth/admin/config`
 
 **Curl Example:**
 ```bash
-curl -X PUT http://localhost:3001/projects/my_awesome_project/auth/admin/config \
+curl -X PUT http://localhost:3002/api/projects/my_awesome_project/auth/admin/config \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -2035,7 +2026,7 @@ export default async function handler(req, context) {
 
 Create a new edge function for a project.
 
-**Endpoint:** `POST /projects/{id}/functions`
+**Endpoint:** `POST /api/projects/{id}/functions`
 
 **Headers:**
 ```
@@ -2059,7 +2050,7 @@ Content-Type: application/json
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/projects/3ff8390f-f24e-454a-8f84-55ed4f021364/functions \
+curl -X POST http://localhost:3002/api/projects/3ff8390f-f24e-454a-8f84-55ed4f021364/functions \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -2093,11 +2084,11 @@ curl -X POST http://localhost:3001/projects/3ff8390f-f24e-454a-8f84-55ed4f021364
 
 Get all edge functions for a project.
 
-**Endpoint:** `GET /projects/{id}/functions`
+**Endpoint:** `GET /api/projects/{id}/functions`
 
 **Curl Example:**
 ```bash
-curl -X GET http://localhost:3001/projects/550e8400-e29b-41d4-a716-446655440002/functions \
+curl -X GET http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/functions \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -2125,11 +2116,11 @@ curl -X GET http://localhost:3001/projects/550e8400-e29b-41d4-a716-446655440002/
 
 Get detailed information about a specific function.
 
-**Endpoint:** `GET /projects/{id}/functions/{name}`
+**Endpoint:** `GET /api/projects/{id}/functions/{name}`
 
 **Curl Example:**
 ```bash
-curl -X GET http://localhost:3001/projects/550e8400-e29b-41d4-a716-446655440002/functions/hello-world \
+curl -X GET http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/functions/hello-world \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -2160,11 +2151,11 @@ curl -X GET http://localhost:3001/projects/550e8400-e29b-41d4-a716-446655440002/
 
 Update an existing edge function.
 
-**Endpoint:** `PUT /projects/{id}/functions/{name}`
+**Endpoint:** `PUT /api/projects/{id}/functions/{name}`
 
 **Curl Example:**
 ```bash
-curl -X PUT http://localhost:3001/projects/3ff8390f-f24e-454a-8f84-55ed4f021364/functions/sample-json-function \
+curl -X PUT http://localhost:3002/api/projects/3ff8390f-f24e-454a-8f84-55ed4f021364/functions/sample-json-function \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -2196,11 +2187,11 @@ curl -X PUT http://localhost:3001/projects/3ff8390f-f24e-454a-8f84-55ed4f021364/
 
 Delete an edge function.
 
-**Endpoint:** `DELETE /projects/{id}/functions/{name}`
+**Endpoint:** `DELETE /api/projects/{id}/functions/{name}`
 
 **Curl Example:**
 ```bash
-curl -X DELETE http://localhost:3001/projects/550e8400-e29b-41d4-a716-446655440002/functions/hello-world \
+curl -X DELETE http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/functions/hello-world \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -2208,11 +2199,11 @@ curl -X DELETE http://localhost:3001/projects/550e8400-e29b-41d4-a716-4466554400
 
 Get execution logs for a function.
 
-**Endpoint:** `GET /projects/{id}/functions/{name}/logs`
+**Endpoint:** `GET /api/projects/{id}/functions/{name}/logs`
 
 **Curl Example:**
 ```bash
-curl -X GET "http://localhost:3001/projects/550e8400-e29b-41d4-a716-446655440002/functions/hello-world/logs?limit=100" \
+curl -X GET "http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/functions/hello-world/logs?limit=100" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -2257,7 +2248,7 @@ Content-Type: application/json
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/projects/loopwise/functions/v1/sample-json-function \
+curl -X POST http://localhost:3002/projects/loopwise/functions/v1/sample-json-function \
   -H "Content-Type: application/json" \
   -d '{
     "name": "John Doe",
@@ -2275,7 +2266,7 @@ curl -X POST http://localhost:3001/projects/loopwise/functions/v1/sample-json-fu
   "url": "/projects/loopwise/functions/v1/sample-json-function",
   "headers": {
     "content-type": "application/json",
-    "host": "localhost:3001"
+    "host": "localhost:3002"
   }
 }
 ```
@@ -2288,7 +2279,7 @@ Invoke a function via GET request with query parameters.
 
 **Curl Example:**
 ```bash
-curl -X GET "http://localhost:3001/projects/loopwise/functions/v1/sample-json-function?name=John&action=get_user"
+curl -X GET "http://localhost:3002/projects/loopwise/functions/v1/sample-json-function?name=John&action=get_user"
 ```
 
 **Response (200):**
@@ -2310,7 +2301,7 @@ Invoke a function via PUT request for updates.
 
 **Curl Example:**
 ```bash
-curl -X PUT http://localhost:3001/projects/loopwise/functions/v1/sample-json-function \
+curl -X PUT http://localhost:3002/projects/loopwise/functions/v1/sample-json-function \
   -H "Content-Type: application/json" \
   -d '{
     "id": "123",
@@ -2327,7 +2318,7 @@ Invoke a function via DELETE request.
 
 **Curl Example:**
 ```bash
-curl -X DELETE "http://localhost:3001/projects/loopwise/functions/v1/sample-json-function?id=123&action=delete_user"
+curl -X DELETE "http://localhost:3002/projects/loopwise/functions/v1/sample-json-function?id=123&action=delete_user"
 ```
 
 ### JavaScript Integration Example
@@ -2337,7 +2328,7 @@ Here's how to integrate edge function calls in your frontend JavaScript:
 ```javascript
 // Edge Function Client
 class EdgeFunctionClient {
-  constructor(projectSlug, baseUrl = 'http://localhost:3001') {
+  constructor(projectSlug, baseUrl = 'http://localhost:3002') {
     this.projectSlug = projectSlug;
     this.baseUrl = baseUrl;
     this.apiUrl = `${baseUrl}/projects/${projectSlug}/functions/v1`;
@@ -2468,7 +2459,7 @@ export default async function handler(req, context) {
 
 Create a new environment variable for a project.
 
-**Endpoint:** `POST /projects/{id}/environment-variables`
+**Endpoint:** `POST /api/projects/{id}/environment-variables`
 
 **Headers:**
 ```
@@ -2488,7 +2479,7 @@ Content-Type: application/json
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/projects/3ff8390f-f24e-454a-8f84-55ed4f021364/environment-variables \
+curl -X POST http://localhost:3002/api/projects/3ff8390f-f24e-454a-8f84-55ed4f021364/environment-variables \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -2520,7 +2511,7 @@ curl -X POST http://localhost:3001/projects/3ff8390f-f24e-454a-8f84-55ed4f021364
 
 Create multiple environment variables at once.
 
-**Endpoint:** `POST /projects/{id}/environment-variables/bulk`
+**Endpoint:** `POST /api/projects/{id}/environment-variables/bulk`
 
 **Request Body:**
 ```json
@@ -2537,7 +2528,7 @@ Create multiple environment variables at once.
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/projects/3ff8390f-f24e-454a-8f84-55ed4f021364/environment-variables/bulk \
+curl -X POST http://localhost:3002/api/projects/3ff8390f-f24e-454a-8f84-55ed4f021364/environment-variables/bulk \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -2573,11 +2564,11 @@ curl -X POST http://localhost:3001/projects/3ff8390f-f24e-454a-8f84-55ed4f021364
 
 Get all environment variables for a project (values masked for secrets).
 
-**Endpoint:** `GET /projects/{id}/environment-variables`
+**Endpoint:** `GET /api/projects/{id}/environment-variables`
 
 **Curl Example:**
 ```bash
-curl -X GET http://localhost:3001/projects/3ff8390f-f24e-454a-8f84-55ed4f021364/environment-variables \
+curl -X GET http://localhost:3002/api/projects/3ff8390f-f24e-454a-8f84-55ed4f021364/environment-variables \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -2613,11 +2604,11 @@ curl -X GET http://localhost:3001/projects/3ff8390f-f24e-454a-8f84-55ed4f021364/
 
 Get a specific environment variable by name.
 
-**Endpoint:** `GET /projects/{id}/environment-variables/{name}`
+**Endpoint:** `GET /api/projects/{id}/environment-variables/{name}`
 
 **Curl Example:**
 ```bash
-curl -X GET http://localhost:3001/projects/3ff8390f-f24e-454a-8f84-55ed4f021364/environment-variables/DATABASE_URL \
+curl -X GET http://localhost:3002/api/projects/3ff8390f-f24e-454a-8f84-55ed4f021364/environment-variables/DATABASE_URL \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -2642,7 +2633,7 @@ curl -X GET http://localhost:3001/projects/3ff8390f-f24e-454a-8f84-55ed4f021364/
 
 Update an existing environment variable.
 
-**Endpoint:** `PUT /projects/{id}/environment-variables/{name}`
+**Endpoint:** `PUT /api/projects/{id}/environment-variables/{name}`
 
 **Request Body:**
 ```json
@@ -2655,7 +2646,7 @@ Update an existing environment variable.
 
 **Curl Example:**
 ```bash
-curl -X PUT http://localhost:3001/projects/3ff8390f-f24e-454a-8f84-55ed4f021364/environment-variables/DATABASE_URL \
+curl -X PUT http://localhost:3002/api/projects/3ff8390f-f24e-454a-8f84-55ed4f021364/environment-variables/DATABASE_URL \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -2685,11 +2676,11 @@ curl -X PUT http://localhost:3001/projects/3ff8390f-f24e-454a-8f84-55ed4f021364/
 
 Delete an environment variable.
 
-**Endpoint:** `DELETE /projects/{id}/environment-variables/{name}`
+**Endpoint:** `DELETE /api/projects/{id}/environment-variables/{name}`
 
 **Curl Example:**
 ```bash
-curl -X DELETE http://localhost:3001/projects/3ff8390f-f24e-454a-8f84-55ed4f021364/environment-variables/DATABASE_URL \
+curl -X DELETE http://localhost:3002/api/projects/3ff8390f-f24e-454a-8f84-55ed4f021364/environment-variables/DATABASE_URL \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -3531,7 +3522,7 @@ Content-Type: application/json
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440002/database/sql \
+curl -X POST http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/database/sql \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -3555,7 +3546,7 @@ curl -X POST http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-44665544
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440002/database/sql \
+curl -X POST http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/database/sql \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -3579,7 +3570,7 @@ curl -X POST http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-44665544
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440002/database/sql \
+curl -X POST http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/database/sql \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -3620,7 +3611,7 @@ Retrieve metadata for all tables or a specific table in the project database.
 
 **Curl Example:**
 ```bash
-curl -X GET http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables \
+curl -X GET http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -3682,7 +3673,7 @@ Retrieve data from a specific table with pagination, sorting, and column informa
 
 **Curl Example:**
 ```bash
-curl -X GET "http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/data?page=1&limit=10&orderBy=created_at&orderDirection=DESC" \
+curl -X GET "http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/data?page=1&limit=10&orderBy=created_at&orderDirection=DESC" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -3884,7 +3875,7 @@ Authorization: Bearer {admin_access_token}
 
 **Curl Example:**
 ```bash
-curl -X GET http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/list \
+curl -X GET http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/list \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -3922,7 +3913,7 @@ Content-Type: application/json
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/rows \
+curl -X POST http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/rows \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -3976,7 +3967,7 @@ Content-Type: application/json
 
 **Curl Example:**
 ```bash
-curl -X PUT http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/rows/123e4567-e89b-12d3-a456-426614174000 \
+curl -X PUT http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/rows/123e4567-e89b-12d3-a456-426614174000 \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -4018,7 +4009,7 @@ Authorization: Bearer {admin_access_token}
 
 **Curl Example:**
 ```bash
-curl -X DELETE http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/rows/123e4567-e89b-12d3-a456-426614174000 \
+curl -X DELETE http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/rows/123e4567-e89b-12d3-a456-426614174000 \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -4072,7 +4063,7 @@ Content-Type: application/json
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/bulk-insert \
+curl -X POST http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/bulk-insert \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -4146,7 +4137,7 @@ Content-Type: application/json
 
 **Curl Example:**
 ```bash
-curl -X PUT http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/bulk-update \
+curl -X PUT http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/bulk-update \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -4196,7 +4187,7 @@ Content-Type: application/json
 
 **Curl Example:**
 ```bash
-curl -X DELETE http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/bulk-delete \
+curl -X DELETE http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/bulk-delete \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -4229,7 +4220,7 @@ Authorization: Bearer {admin_access_token}
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/rls/enable \
+curl -X POST http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/rls/enable \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -4256,7 +4247,7 @@ Authorization: Bearer {admin_access_token}
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/rls/disable \
+curl -X POST http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/rls/disable \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -4295,7 +4286,7 @@ Content-Type: application/json
 
 **Curl Example:**
 ```bash
-curl -X POST http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/policies \
+curl -X POST http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/policies \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json" \
   -d '{
@@ -4330,7 +4321,7 @@ Authorization: Bearer {admin_access_token}
 
 **Curl Example:**
 ```bash
-curl -X GET http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/policies \
+curl -X GET http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/policies \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -4366,7 +4357,7 @@ Authorization: Bearer {admin_access_token}
 
 **Curl Example:**
 ```bash
-curl -X DELETE http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/policies/user_access_policy \
+curl -X DELETE http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440002/database/tables/customers/policies/user_access_policy \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -4440,7 +4431,7 @@ Check the health of the central database connection.
 
 **Curl Example:**
 ```bash
-curl -X GET http://localhost:3001/api/database/health
+curl -X GET http://localhost:3002/api/database/health
 ```
 
 **Response (200):**
@@ -4575,7 +4566,7 @@ Authorization: Bearer {anon_key}
 ```javascript
 // Admin Authentication
 const adminAuth = {
-  baseUrl: 'http://localhost:3001',
+  baseUrl: 'http://localhost:3002',
   
   async signIn(email, password) {
     const response = await fetch(`${this.baseUrl}/api/auth/signin`, {
@@ -4601,7 +4592,7 @@ const adminAuth = {
 
 // Database Operations
 const databaseOps = {
-  baseUrl: 'http://localhost:3001',
+  baseUrl: 'http://localhost:3002',
   
   async executeSql(projectId, sql, accessToken) {
     const response = await fetch(`${this.baseUrl}/api/projects/${projectId}/database/sql`, {
@@ -4697,7 +4688,7 @@ const databaseOps = {
 
 // Project User Authentication (Supabase-style)
 const projectAuth = {
-  projectUrl: 'http://localhost:3001/projects/my_awesome_project',
+  projectUrl: 'http://localhost:3002/projects/my_awesome_project',
   anonKey: 'your-anon-key',
   
   async signUp(email, password) {
@@ -4804,7 +4795,7 @@ Content-Type: application/json
 
 **Example Request:**
 ```bash
-curl -X GET "http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440000/logs?level[]=error&level[]=warn&limit=50&event_type=database" \
+curl -X GET "http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440000/logs?level[]=error&level[]=warn&limit=50&event_type=database" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json"
 ```
@@ -4863,7 +4854,7 @@ Content-Type: application/json
 
 **Example Request:**
 ```bash
-curl -X GET "http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/database?table_name=users&operation_type=SELECT&success=false" \
+curl -X GET "http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/database?table_name=users&operation_type=SELECT&success=false" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json"
 ```
@@ -4908,7 +4899,7 @@ Authorization: Bearer {admin_access_token}
 
 **Example Request:**
 ```bash
-curl -X GET "http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/database/slow?limit=20" \
+curl -X GET "http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/database/slow?limit=20" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -4925,7 +4916,7 @@ Authorization: Bearer {admin_access_token}
 
 **Example Request:**
 ```bash
-curl -X GET "http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/database/errors" \
+curl -X GET "http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/database/errors" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -4948,7 +4939,7 @@ Content-Type: application/json
 
 **Example Request:**
 ```bash
-curl -X GET "http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/auth?auth_method=email_otp&success=false" \
+curl -X GET "http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/auth?auth_method=email_otp&success=false" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json"
 ```
@@ -4996,7 +4987,7 @@ Authorization: Bearer {admin_access_token}
 
 **Example Request:**
 ```bash
-curl -X GET "http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/auth/failures?limit=50" \
+curl -X GET "http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/auth/failures?limit=50" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -5013,7 +5004,7 @@ Authorization: Bearer {admin_access_token}
 
 **Example Request:**
 ```bash
-curl -X GET "http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/auth/security" \
+curl -X GET "http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/auth/security" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -5036,7 +5027,7 @@ Content-Type: application/json
 
 **Example Request:**
 ```bash
-curl -X GET "http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/edge-functions?status=error" \
+curl -X GET "http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/edge-functions?status=error" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -H "Content-Type: application/json"
 ```
@@ -5088,7 +5079,7 @@ Authorization: Bearer {admin_access_token}
 
 **Example Request:**
 ```bash
-curl -X GET "http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/edge-functions/my-function/console?execution_id=exec-789" \
+curl -X GET "http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/edge-functions/my-function/console?execution_id=exec-789" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -5135,7 +5126,7 @@ Authorization: Bearer {admin_access_token}
 
 **Example Request:**
 ```bash
-curl -X GET "http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/edge-functions/my-function/errors" \
+curl -X GET "http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/edge-functions/my-function/errors" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
 ```
 
@@ -5158,14 +5149,14 @@ Authorization: Bearer {admin_access_token}
 
 **Example Request (JSON):**
 ```bash
-curl -X GET "http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/export?format=json&start_time=2024-01-01T00:00:00Z&end_time=2024-01-02T00:00:00Z" \
+curl -X GET "http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/export?format=json&start_time=2024-01-01T00:00:00Z&end_time=2024-01-02T00:00:00Z" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -o logs-export.json
 ```
 
 **Example Request (CSV):**
 ```bash
-curl -X GET "http://localhost:3001/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/export?format=csv&event_type=auth" \
+curl -X GET "http://localhost:3002/api/projects/550e8400-e29b-41d4-a716-446655440000/logs/export?format=csv&event_type=auth" \
   -H "Authorization: Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..." \
   -o auth-logs.csv
 ```
@@ -5298,7 +5289,7 @@ class LoggingClient {
 }
 
 // Usage example
-const loggingClient = new LoggingClient('http://localhost:3001', 'your-access-token');
+const loggingClient = new LoggingClient('http://localhost:3002', 'your-access-token');
 
 // Get recent errors across all systems
 const recentErrors = await loggingClient.getLogs('project-123', {
