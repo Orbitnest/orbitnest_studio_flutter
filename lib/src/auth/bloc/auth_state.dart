@@ -1,44 +1,75 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
 import '../models/user.dart';
 import '../models/session.dart';
 
-part 'auth_state.freezed.dart';
-
 /// Authentication states
-@freezed
-class AuthState with _$AuthState {
-  const factory AuthState.initial() = AuthInitialState;
-  
-  const factory AuthState.loading() = AuthLoadingState;
-  
-  const factory AuthState.authenticated({
-    required User user,
-    required Session session,
-  }) = AuthAuthenticatedState;
-  
-  const factory AuthState.unauthenticated() = AuthUnauthenticatedState;
-  
-  const factory AuthState.otpSent({
-    required String email,
-    required String message,
-    String? type, // 'signup' or 'signin'
-  }) = AuthOtpSentState;
-  
-  const factory AuthState.passwordResetSent({
-    required String email,
-    required String message,
-  }) = AuthPasswordResetSentState;
-  
-  const factory AuthState.userUpdated({
-    required User user,
-    String? message,
-  }) = AuthUserUpdatedState;
-  
-  const factory AuthState.error({
-    required String message,
-    String? code,
-    Map<String, dynamic>? details,
-  }) = AuthErrorState;
+sealed class AuthState {
+  const AuthState();
+}
+
+class AuthInitialState extends AuthState {
+  const AuthInitialState();
+}
+
+class AuthLoadingState extends AuthState {
+  const AuthLoadingState();
+}
+
+class AuthAuthenticatedState extends AuthState {
+  const AuthAuthenticatedState({
+    required this.user,
+    required this.session,
+  });
+
+  final User user;
+  final Session session;
+}
+
+class AuthUnauthenticatedState extends AuthState {
+  const AuthUnauthenticatedState();
+}
+
+class AuthOtpSentState extends AuthState {
+  const AuthOtpSentState({
+    required this.email,
+    required this.message,
+    this.type,
+  });
+
+  final String email;
+  final String message;
+  final String? type; // 'signup' or 'signin'
+}
+
+class AuthPasswordResetSentState extends AuthState {
+  const AuthPasswordResetSentState({
+    required this.email,
+    required this.message,
+  });
+
+  final String email;
+  final String message;
+}
+
+class AuthUserUpdatedState extends AuthState {
+  const AuthUserUpdatedState({
+    required this.user,
+    this.message,
+  });
+
+  final User user;
+  final String? message;
+}
+
+class AuthErrorState extends AuthState {
+  const AuthErrorState({
+    required this.message,
+    this.code,
+    this.details,
+  });
+
+  final String message;
+  final String? code;
+  final Map<String, dynamic>? details;
 }
 
 /// Extension for AuthState to add convenience methods
@@ -49,20 +80,32 @@ extension AuthStateX on AuthState {
   bool get isUnauthenticated => this is AuthUnauthenticatedState;
   bool get isOtpSent => this is AuthOtpSentState;
   
-  User? get user => whenOrNull(
-    authenticated: (user, session) => user,
-    userUpdated: (user, message) => user,
-  );
+  User? get user {
+    return switch (this) {
+      AuthAuthenticatedState(:final user) => user,
+      AuthUserUpdatedState(:final user) => user,
+      _ => null,
+    };
+  }
   
-  Session? get session => whenOrNull(
-    authenticated: (user, session) => session,
-  );
+  Session? get session {
+    return switch (this) {
+      AuthAuthenticatedState(:final session) => session,
+      _ => null,
+    };
+  }
   
-  String? get error => whenOrNull(
-    error: (message, code, details) => message,
-  );
+  String? get error {
+    return switch (this) {
+      AuthErrorState(:final message) => message,
+      _ => null,
+    };
+  }
   
-  String? get errorCode => whenOrNull(
-    error: (message, code, details) => code,
-  );
+  String? get errorCode {
+    return switch (this) {
+      AuthErrorState(:final code) => code,
+      _ => null,
+    };
+  }
 }

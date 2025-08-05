@@ -16,7 +16,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     required TokenManager tokenManager,
   }) : _authRepository = authRepository,
        _tokenManager = tokenManager,
-       super(const AuthState.initial()) {
+       super(const AuthInitialState()) {
     
     // Register event handlers
     on<AuthSignUpWithEmailEvent>(_onSignUpWithEmail);
@@ -35,14 +35,14 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthClearErrorEvent>(_onClearError);
 
     // Initialize authentication state
-    add(const AuthEvent.initialize());
+    add(const AuthInitializeEvent());
   }
 
   Future<void> _onSignUpWithEmail(
     AuthSignUpWithEmailEvent event,
     Emitter<AuthState> emit,
   ) async {
-    emit(const AuthState.loading());
+    emit(const AuthLoadingState());
     
     try {
       final response = await _authRepository.signUpWithEmail(
@@ -51,24 +51,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
 
       if (response.isOtpSent) {
-        emit(AuthState.otpSent(
+        emit(AuthOtpSentState(
           email: event.email,
           message: response.message ?? 'OTP sent to your email',
           type: 'signup',
         ));
       } else if (response.isAuthenticated) {
         await _tokenManager.storeSession(response.session!);
-        emit(AuthState.authenticated(
+        emit(AuthAuthenticatedState(
           user: response.user!,
           session: response.session!,
         ));
       } else {
-        emit(AuthState.error(
+        emit(AuthErrorState(
           message: response.message ?? 'Sign up failed',
         ));
       }
     } catch (e) {
-      emit(AuthState.error(
+      emit(AuthErrorState(
         message: _getErrorMessage(e),
         code: _getErrorCode(e),
       ));
@@ -79,7 +79,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthVerifySignUpEvent event,
     Emitter<AuthState> emit,
   ) async {
-    emit(const AuthState.loading());
+    emit(const AuthLoadingState());
     
     try {
       final response = await _authRepository.verifySignUp(
@@ -90,17 +90,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       if (response.isAuthenticated) {
         await _tokenManager.storeSession(response.session!);
-        emit(AuthState.authenticated(
+        emit(AuthAuthenticatedState(
           user: response.user!,
           session: response.session!,
         ));
       } else {
-        emit(AuthState.error(
+        emit(AuthErrorState(
           message: response.message ?? 'Verification failed',
         ));
       }
     } catch (e) {
-      emit(AuthState.error(
+      emit(AuthErrorState(
         message: _getErrorMessage(e),
         code: _getErrorCode(e),
       ));
@@ -111,7 +111,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthSignInWithEmailEvent event,
     Emitter<AuthState> emit,
   ) async {
-    emit(const AuthState.loading());
+    emit(const AuthLoadingState());
     
     try {
       final response = await _authRepository.signInWithEmail(
@@ -119,24 +119,24 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
 
       if (response.isOtpSent) {
-        emit(AuthState.otpSent(
+        emit(AuthOtpSentState(
           email: event.email,
           message: response.message ?? 'OTP sent to your email',
           type: 'signin',
         ));
       } else if (response.isAuthenticated) {
         await _tokenManager.storeSession(response.session!);
-        emit(AuthState.authenticated(
+        emit(AuthAuthenticatedState(
           user: response.user!,
           session: response.session!,
         ));
       } else {
-        emit(AuthState.error(
+        emit(AuthErrorState(
           message: response.message ?? 'Sign in failed',
         ));
       }
     } catch (e) {
-      emit(AuthState.error(
+      emit(AuthErrorState(
         message: _getErrorMessage(e),
         code: _getErrorCode(e),
       ));
@@ -147,7 +147,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthVerifySignInEvent event,
     Emitter<AuthState> emit,
   ) async {
-    emit(const AuthState.loading());
+    emit(const AuthLoadingState());
     
     try {
       final response = await _authRepository.verifySignIn(
@@ -157,17 +157,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       if (response.isAuthenticated) {
         await _tokenManager.storeSession(response.session!);
-        emit(AuthState.authenticated(
+        emit(AuthAuthenticatedState(
           user: response.user!,
           session: response.session!,
         ));
       } else {
-        emit(AuthState.error(
+        emit(AuthErrorState(
           message: response.message ?? 'Verification failed',
         ));
       }
     } catch (e) {
-      emit(AuthState.error(
+      emit(AuthErrorState(
         message: _getErrorMessage(e),
         code: _getErrorCode(e),
       ));
@@ -178,7 +178,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthSignUpEvent event,
     Emitter<AuthState> emit,
   ) async {
-    emit(const AuthState.loading());
+    emit(const AuthLoadingState());
     
     try {
       final response = await _authRepository.signUp(
@@ -189,17 +189,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       if (response.isAuthenticated) {
         await _tokenManager.storeSession(response.session!);
-        emit(AuthState.authenticated(
+        emit(AuthAuthenticatedState(
           user: response.user!,
           session: response.session!,
         ));
       } else {
-        emit(AuthState.error(
+        emit(AuthErrorState(
           message: response.message ?? 'Sign up failed',
         ));
       }
     } catch (e) {
-      emit(AuthState.error(
+      emit(AuthErrorState(
         message: _getErrorMessage(e),
         code: _getErrorCode(e),
       ));
@@ -210,7 +210,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthSignInWithPasswordEvent event,
     Emitter<AuthState> emit,
   ) async {
-    emit(const AuthState.loading());
+    emit(const AuthLoadingState());
     
     try {
       final response = await _authRepository.signInWithPassword(
@@ -220,17 +220,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       if (response.isAuthenticated) {
         await _tokenManager.storeSession(response.session!);
-        emit(AuthState.authenticated(
+        emit(AuthAuthenticatedState(
           user: response.user!,
           session: response.session!,
         ));
       } else {
-        emit(AuthState.error(
+        emit(AuthErrorState(
           message: response.message ?? 'Sign in failed',
         ));
       }
     } catch (e) {
-      emit(AuthState.error(
+      emit(AuthErrorState(
         message: _getErrorMessage(e),
         code: _getErrorCode(e),
       ));
@@ -241,16 +241,16 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthSignOutEvent event,
     Emitter<AuthState> emit,
   ) async {
-    emit(const AuthState.loading());
+    emit(const AuthLoadingState());
     
     try {
       await _authRepository.signOut();
       await _tokenManager.clearSession();
-      emit(const AuthState.unauthenticated());
+      emit(const AuthUnauthenticatedState());
     } catch (e) {
       // Even if sign out fails on server, clear local session
       await _tokenManager.clearSession();
-      emit(const AuthState.unauthenticated());
+      emit(const AuthUnauthenticatedState());
     }
   }
 
@@ -263,7 +263,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
                          await _tokenManager.getRefreshToken();
       
       if (refreshToken == null) {
-        emit(const AuthState.unauthenticated());
+        emit(const AuthUnauthenticatedState());
         return;
       }
 
@@ -273,17 +273,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       if (response.isAuthenticated) {
         await _tokenManager.storeSession(response.session!);
-        emit(AuthState.authenticated(
+        emit(AuthAuthenticatedState(
           user: response.user!,
           session: response.session!,
         ));
       } else {
         await _tokenManager.clearSession();
-        emit(const AuthState.unauthenticated());
+        emit(const AuthUnauthenticatedState());
       }
     } catch (e) {
       await _tokenManager.clearSession();
-      emit(const AuthState.unauthenticated());
+      emit(const AuthUnauthenticatedState());
     }
   }
 
@@ -291,7 +291,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthUpdateUserEvent event,
     Emitter<AuthState> emit,
   ) async {
-    emit(const AuthState.loading());
+    emit(const AuthLoadingState());
     
     try {
       final response = await _authRepository.updateUser(
@@ -300,12 +300,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         data: event.data,
       );
 
-      emit(AuthState.userUpdated(
+      emit(AuthUserUpdatedState(
         user: response.user,
         message: response.message,
       ));
     } catch (e) {
-      emit(AuthState.error(
+      emit(AuthErrorState(
         message: _getErrorMessage(e),
         code: _getErrorCode(e),
       ));
@@ -321,12 +321,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final session = await _tokenManager.getStoredSession();
       
       if (user != null && session != null) {
-        emit(AuthState.authenticated(user: user, session: session));
+        emit(AuthAuthenticatedState(user: user, session: session));
       } else {
-        emit(const AuthState.unauthenticated());
+        emit(const AuthUnauthenticatedState());
       }
     } catch (e) {
-      emit(AuthState.error(
+      emit(AuthErrorState(
         message: _getErrorMessage(e),
         code: _getErrorCode(e),
       ));
@@ -337,19 +337,19 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthResetPasswordForEmailEvent event,
     Emitter<AuthState> emit,
   ) async {
-    emit(const AuthState.loading());
+    emit(const AuthLoadingState());
     
     try {
       final response = await _authRepository.resetPasswordForEmail(
         email: event.email,
       );
 
-      emit(AuthState.passwordResetSent(
+      emit(AuthPasswordResetSentState(
         email: event.email,
         message: response.message,
       ));
     } catch (e) {
-      emit(AuthState.error(
+      emit(AuthErrorState(
         message: _getErrorMessage(e),
         code: _getErrorCode(e),
       ));
@@ -360,7 +360,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     AuthUpdatePasswordEvent event,
     Emitter<AuthState> emit,
   ) async {
-    emit(const AuthState.loading());
+    emit(const AuthLoadingState());
     
     try {
       final response = await _authRepository.updatePassword(
@@ -371,18 +371,18 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       if (response.isAuthenticated) {
         await _tokenManager.storeSession(response.session!);
-        emit(AuthState.authenticated(
+        emit(AuthAuthenticatedState(
           user: response.user!,
           session: response.session!,
         ));
       } else {
-        emit(AuthState.userUpdated(
+        emit(AuthUserUpdatedState(
           user: response.user!,
           message: response.message ?? 'Password updated successfully',
         ));
       }
     } catch (e) {
-      emit(AuthState.error(
+      emit(AuthErrorState(
         message: _getErrorMessage(e),
         code: _getErrorCode(e),
       ));
@@ -397,22 +397,22 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final session = await _tokenManager.getStoredSession();
       
       if (session == null) {
-        emit(const AuthState.unauthenticated());
+        emit(const AuthUnauthenticatedState());
         return;
       }
 
       if (session.isExpired) {
         // Try to refresh the session
-        add(AuthEvent.refreshSession(refreshToken: session.refreshToken));
+        add(AuthRefreshSessionEvent(refreshToken: session.refreshToken));
         return;
       }
 
-      emit(AuthState.authenticated(
+      emit(AuthAuthenticatedState(
         user: session.user,
         session: session,
       ));
     } catch (e) {
-      emit(const AuthState.unauthenticated());
+      emit(const AuthUnauthenticatedState());
     }
   }
 
@@ -421,7 +421,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     Emitter<AuthState> emit,
   ) async {
     if (state is AuthErrorState) {
-      emit(const AuthState.initial());
+      emit(const AuthInitialState());
     }
   }
 

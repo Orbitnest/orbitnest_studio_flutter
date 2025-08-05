@@ -1,29 +1,59 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-
-part 'postgrest_response.freezed.dart';
-part 'postgrest_response.g.dart';
-
 /// Response from PostgreSQL operations (Supabase-compatible)
-@Freezed(genericArgumentFactories: true)
-class PostgrestResponse<T> with _$PostgrestResponse<T> {
-  const factory PostgrestResponse({
-    required List<T> data,
-    int? count,
-    String? error,
-    String? hint,
-    String? details,
-    String? code,
-    int? status,
-    @JsonKey(name: 'status_code') int? statusCode,
-    @JsonKey(name: 'error_description') String? errorDescription,
-  }) = _PostgrestResponse<T>;
+class PostgrestResponse<T> {
+  const PostgrestResponse({
+    required this.data,
+    this.count,
+    this.error,
+    this.hint,
+    this.details,
+    this.code,
+    this.status,
+    this.statusCode,
+    this.errorDescription,
+  });
 
-  const PostgrestResponse._();
+  final List<T> data;
+  final int? count;
+  final String? error;
+  final String? hint;
+  final String? details;
+  final String? code;
+  final int? status;
+  final int? statusCode;
+  final String? errorDescription;
 
   factory PostgrestResponse.fromJson(
     Map<String, dynamic> json,
     T Function(Object?) fromJsonT,
-  ) => _$PostgrestResponseFromJson(json, fromJsonT);
+  ) {
+    return PostgrestResponse<T>(
+      data: (json['data'] as List<dynamic>?)
+          ?.map((e) => fromJsonT(e))
+          .toList() ?? <T>[],
+      count: json['count'] as int?,
+      error: json['error'] as String?,
+      hint: json['hint'] as String?,
+      details: json['details'] as String?,
+      code: json['code'] as String?,
+      status: json['status'] as int?,
+      statusCode: json['status_code'] as int?,
+      errorDescription: json['error_description'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson(Object? Function(T) toJsonT) {
+    return {
+      'data': data.map((e) => toJsonT(e)).toList(),
+      if (count != null) 'count': count,
+      if (error != null) 'error': error,
+      if (hint != null) 'hint': hint,
+      if (details != null) 'details': details,
+      if (code != null) 'code': code,
+      if (status != null) 'status': status,
+      if (statusCode != null) 'status_code': statusCode,
+      if (errorDescription != null) 'error_description': errorDescription,
+    };
+  }
 
   /// Check if the response is successful
   bool get isSuccess => error == null && (status == null || status! < 400);
@@ -39,25 +69,55 @@ class PostgrestResponse<T> with _$PostgrestResponse<T> {
 }
 
 /// Simplified response for operations that return single items
-@Freezed(genericArgumentFactories: true)
-class PostgrestSingleResponse<T> with _$PostgrestSingleResponse<T> {
-  const factory PostgrestSingleResponse({
-    T? data,
-    String? error,
-    String? hint,
-    String? details,
-    String? code,
-    int? status,
-    @JsonKey(name: 'status_code') int? statusCode,
-    @JsonKey(name: 'error_description') String? errorDescription,
-  }) = _PostgrestSingleResponse<T>;
+class PostgrestSingleResponse<T> {
+  const PostgrestSingleResponse({
+    this.data,
+    this.error,
+    this.hint,
+    this.details,
+    this.code,
+    this.status,
+    this.statusCode,
+    this.errorDescription,
+  });
 
-  const PostgrestSingleResponse._();
+  final T? data;
+  final String? error;
+  final String? hint;
+  final String? details;
+  final String? code;
+  final int? status;
+  final int? statusCode;
+  final String? errorDescription;
 
   factory PostgrestSingleResponse.fromJson(
     Map<String, dynamic> json,
     T Function(Object?) fromJsonT,
-  ) => _$PostgrestSingleResponseFromJson(json, fromJsonT);
+  ) {
+    return PostgrestSingleResponse<T>(
+      data: json['data'] != null ? fromJsonT(json['data']) : null,
+      error: json['error'] as String?,
+      hint: json['hint'] as String?,
+      details: json['details'] as String?,
+      code: json['code'] as String?,
+      status: json['status'] as int?,
+      statusCode: json['status_code'] as int?,
+      errorDescription: json['error_description'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson(Object? Function(T) toJsonT) {
+    return {
+      if (data != null) 'data': toJsonT(data as T),
+      if (error != null) 'error': error,
+      if (hint != null) 'hint': hint,
+      if (details != null) 'details': details,
+      if (code != null) 'code': code,
+      if (status != null) 'status': status,
+      if (statusCode != null) 'status_code': statusCode,
+      if (errorDescription != null) 'error_description': errorDescription,
+    };
+  }
 
   /// Check if the response is successful
   bool get isSuccess => error == null && (status == null || status! < 400);
@@ -67,23 +127,52 @@ class PostgrestSingleResponse<T> with _$PostgrestSingleResponse<T> {
 }
 
 /// Response for count-only operations
-@freezed
-class PostgrestCountResponse with _$PostgrestCountResponse {
-  const factory PostgrestCountResponse({
-    required int count,
-    String? error,
-    String? hint,
-    String? details,
-    String? code,
-    int? status,
-    @JsonKey(name: 'status_code') int? statusCode,
-    @JsonKey(name: 'error_description') String? errorDescription,
-  }) = _PostgrestCountResponse;
+class PostgrestCountResponse {
+  const PostgrestCountResponse({
+    required this.count,
+    this.error,
+    this.hint,
+    this.details,
+    this.code,
+    this.status,
+    this.statusCode,
+    this.errorDescription,
+  });
 
-  const PostgrestCountResponse._();
+  final int count;
+  final String? error;
+  final String? hint;
+  final String? details;
+  final String? code;
+  final int? status;
+  final int? statusCode;
+  final String? errorDescription;
 
-  factory PostgrestCountResponse.fromJson(Map<String, dynamic> json) =>
-      _$PostgrestCountResponseFromJson(json);
+  factory PostgrestCountResponse.fromJson(Map<String, dynamic> json) {
+    return PostgrestCountResponse(
+      count: json['count'] as int,
+      error: json['error'] as String?,
+      hint: json['hint'] as String?,
+      details: json['details'] as String?,
+      code: json['code'] as String?,
+      status: json['status'] as int?,
+      statusCode: json['status_code'] as int?,
+      errorDescription: json['error_description'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'count': count,
+      if (error != null) 'error': error,
+      if (hint != null) 'hint': hint,
+      if (details != null) 'details': details,
+      if (code != null) 'code': code,
+      if (status != null) 'status': status,
+      if (statusCode != null) 'status_code': statusCode,
+      if (errorDescription != null) 'error_description': errorDescription,
+    };
+  }
 
   /// Check if the response is successful
   bool get isSuccess => error == null && (status == null || status! < 400);

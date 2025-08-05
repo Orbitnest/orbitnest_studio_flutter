@@ -12,7 +12,7 @@ class DatabaseBloc extends Bloc<DatabaseEvent, DatabaseState> {
   DatabaseBloc({
     required DatabaseRepository databaseRepository,
   })  : _databaseRepository = databaseRepository,
-        super(const DatabaseState.initial()) {
+        super(const DatabaseInitialState()) {
     // Register event handlers for CRUD operations only
     on<DatabaseExecuteSqlEvent>(_onExecuteSql);
     on<DatabaseSelectEvent>(_onSelect);
@@ -28,7 +28,7 @@ class DatabaseBloc extends Bloc<DatabaseEvent, DatabaseState> {
     DatabaseExecuteSqlEvent event,
     Emitter<DatabaseState> emit,
   ) async {
-    emit(const DatabaseState.loading());
+    emit(const DatabaseLoadingState());
 
     try {
       final result = await _databaseRepository.executeSql(
@@ -36,11 +36,11 @@ class DatabaseBloc extends Bloc<DatabaseEvent, DatabaseState> {
         parameters: event.parameters,
       );
 
-      emit(DatabaseState.sqlExecuted(
+      emit(DatabaseSqlExecutedState(
         result: result,
       ));
     } catch (e) {
-      emit(DatabaseState.error(
+      emit(DatabaseErrorState(
         message: _getErrorMessage(e),
         code: _getErrorCode(e),
       ));
@@ -51,7 +51,7 @@ class DatabaseBloc extends Bloc<DatabaseEvent, DatabaseState> {
     DatabaseSelectEvent event,
     Emitter<DatabaseState> emit,
   ) async {
-    emit(const DatabaseState.loading());
+    emit(const DatabaseLoadingState());
 
     try {
       final result = await _databaseRepository.executeQuery(
@@ -64,12 +64,12 @@ class DatabaseBloc extends Bloc<DatabaseEvent, DatabaseState> {
         offset: event.offset,
       );
 
-      emit(DatabaseState.dataSelected(
+      emit(DatabaseDataSelectedState(
         table: event.table,
         response: result,
       ));
     } catch (e) {
-      emit(DatabaseState.error(
+      emit(DatabaseErrorState(
         message: _getErrorMessage(e),
         code: _getErrorCode(e),
         table: event.table,
@@ -81,7 +81,7 @@ class DatabaseBloc extends Bloc<DatabaseEvent, DatabaseState> {
     DatabaseInsertEvent event,
     Emitter<DatabaseState> emit,
   ) async {
-    emit(const DatabaseState.loading());
+    emit(const DatabaseLoadingState());
 
     try {
       final result = await _databaseRepository.insert(
@@ -92,12 +92,12 @@ class DatabaseBloc extends Bloc<DatabaseEvent, DatabaseState> {
         ignoreDuplicates: event.ignoreDuplicates,
       );
 
-      emit(DatabaseState.dataInserted(
+      emit(DatabaseDataInsertedState(
         table: event.table,
         response: result,
       ));
     } catch (e) {
-      emit(DatabaseState.error(
+      emit(DatabaseErrorState(
         message: _getErrorMessage(e),
         code: _getErrorCode(e),
         table: event.table,
@@ -109,7 +109,7 @@ class DatabaseBloc extends Bloc<DatabaseEvent, DatabaseState> {
     DatabaseUpdateEvent event,
     Emitter<DatabaseState> emit,
   ) async {
-    emit(const DatabaseState.loading());
+    emit(const DatabaseLoadingState());
 
     try {
       final result = await _databaseRepository.update(
@@ -119,12 +119,12 @@ class DatabaseBloc extends Bloc<DatabaseEvent, DatabaseState> {
             event.filters?.entries.map((e) => '${e.key}=${e.value}').toList(),
       );
 
-      emit(DatabaseState.dataUpdated(
+      emit(DatabaseDataUpdatedState(
         table: event.table,
         response: result,
       ));
     } catch (e) {
-      emit(DatabaseState.error(
+      emit(DatabaseErrorState(
         message: _getErrorMessage(e),
         code: _getErrorCode(e),
         table: event.table,
@@ -136,7 +136,7 @@ class DatabaseBloc extends Bloc<DatabaseEvent, DatabaseState> {
     DatabaseDeleteEvent event,
     Emitter<DatabaseState> emit,
   ) async {
-    emit(const DatabaseState.loading());
+    emit(const DatabaseLoadingState());
 
     try {
       final result = await _databaseRepository.delete(
@@ -145,12 +145,12 @@ class DatabaseBloc extends Bloc<DatabaseEvent, DatabaseState> {
             event.filters?.entries.map((e) => '${e.key}=${e.value}').toList(),
       );
 
-      emit(DatabaseState.dataDeleted(
+      emit(DatabaseDataDeletedState(
         table: event.table,
         response: result,
       ));
     } catch (e) {
-      emit(DatabaseState.error(
+      emit(DatabaseErrorState(
         message: _getErrorMessage(e),
         code: _getErrorCode(e),
         table: event.table,
@@ -162,7 +162,7 @@ class DatabaseBloc extends Bloc<DatabaseEvent, DatabaseState> {
     DatabaseBulkInsertEvent event,
     Emitter<DatabaseState> emit,
   ) async {
-    emit(const DatabaseState.loading());
+    emit(const DatabaseLoadingState());
 
     try {
       final count = await _databaseRepository.bulkInsert(
@@ -173,12 +173,12 @@ class DatabaseBloc extends Bloc<DatabaseEvent, DatabaseState> {
         ignoreDuplicates: event.ignoreDuplicates,
       );
 
-      emit(DatabaseState.bulkInserted(
+      emit(DatabaseBulkInsertedState(
         table: event.table,
         count: count,
       ));
     } catch (e) {
-      emit(DatabaseState.error(
+      emit(DatabaseErrorState(
         message: _getErrorMessage(e),
         code: _getErrorCode(e),
         table: event.table,
@@ -190,7 +190,7 @@ class DatabaseBloc extends Bloc<DatabaseEvent, DatabaseState> {
     DatabaseBulkUpdateEvent event,
     Emitter<DatabaseState> emit,
   ) async {
-    emit(const DatabaseState.loading());
+    emit(const DatabaseLoadingState());
 
     try {
       final count = await _databaseRepository.bulkUpdate(
@@ -199,12 +199,12 @@ class DatabaseBloc extends Bloc<DatabaseEvent, DatabaseState> {
         matchColumn: event.matchColumn,
       );
 
-      emit(DatabaseState.bulkUpdated(
+      emit(DatabaseBulkUpdatedState(
         table: event.table,
         count: count,
       ));
     } catch (e) {
-      emit(DatabaseState.error(
+      emit(DatabaseErrorState(
         message: _getErrorMessage(e),
         code: _getErrorCode(e),
         table: event.table,
@@ -216,7 +216,7 @@ class DatabaseBloc extends Bloc<DatabaseEvent, DatabaseState> {
     DatabaseBulkDeleteEvent event,
     Emitter<DatabaseState> emit,
   ) async {
-    emit(const DatabaseState.loading());
+    emit(const DatabaseLoadingState());
 
     try {
       final count = await _databaseRepository.bulkDelete(
@@ -225,12 +225,12 @@ class DatabaseBloc extends Bloc<DatabaseEvent, DatabaseState> {
         idColumn: event.idColumn,
       );
 
-      emit(DatabaseState.bulkDeleted(
+      emit(DatabaseBulkDeletedState(
         table: event.table,
         count: count,
       ));
     } catch (e) {
-      emit(DatabaseState.error(
+      emit(DatabaseErrorState(
         message: _getErrorMessage(e),
         code: _getErrorCode(e),
         table: event.table,

@@ -1,6 +1,6 @@
 name: orbitnest_studio_flutter
 description: Secure Flutter client for OrbitNest Studio - Supabase-compatible backend as a service with enterprise security
-version: 1.0.1
+version: 1.0.2
 homepage: https://orbitnest.studio
 
 environment:
@@ -31,9 +31,6 @@ dependencies:
   meta: ^1.10.0
   flutter_dotenv: ^5.1.0
   
-  # JSON Serialization
-  json_annotation: ^4.8.1
-  freezed_annotation: ^2.4.1
   
   # Reactive programming
   rxdart: ^0.27.7
@@ -47,10 +44,6 @@ dev_dependencies:
   mockito: ^5.4.4
   mocktail: ^1.0.2
   
-  # Code Generation
-  build_runner: ^2.4.7
-  json_serializable: ^6.7.1
-  freezed: ^2.4.6
   
   # Linting
   flutter_lints: ^3.0.1

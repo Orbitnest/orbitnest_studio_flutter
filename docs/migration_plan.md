@@ -276,11 +276,24 @@ void main() async {
 }
 ```
 
+### Code Generation Setup
+
+**Important:** OrbitNest Studio uses Freezed for model generation. After adding the package dependency, you must run code generation:
+
+```bash
+# Generate required .freezed.dart and .g.dart files
+flutter packages pub run build_runner build --delete-conflicting-outputs
+
+# For development with auto-generation on file changes
+flutter packages pub run build_runner watch
+```
+
 ## ✅ Migration Checklist
 
 - [ ] Create `.env` file with OrbitNest credentials
 - [ ] Update `pubspec.yaml` dependencies
 - [ ] Replace Supabase imports with OrbitNest imports
+- [ ] **Run code generation**: `flutter packages pub run build_runner build --delete-conflicting-outputs`
 - [ ] Initialize `EnvConfig` before client creation
 - [ ] Replace `SupabaseClient` with `OrbitNestClient`
 - [ ] Update authentication method calls

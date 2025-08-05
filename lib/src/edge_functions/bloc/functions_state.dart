@@ -1,25 +1,38 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
 import '../models/function_response.dart';
 
-part 'functions_state.freezed.dart';
-
 /// Edge functions states for invocation only
-@freezed
-class FunctionsState with _$FunctionsState {
-  const factory FunctionsState.initial() = FunctionsInitialState;
+sealed class FunctionsState {
+  const FunctionsState();
+}
 
-  const factory FunctionsState.loading() = FunctionsLoadingState;
+class FunctionsInitialState extends FunctionsState {
+  const FunctionsInitialState();
+}
 
-  const factory FunctionsState.invoked({
-    required String functionName,
-    required FunctionResponse response,
-  }) = FunctionsInvokedState;
+class FunctionsLoadingState extends FunctionsState {
+  const FunctionsLoadingState();
+}
 
-  const factory FunctionsState.error({
-    required String message,
-    String? code,
-    String? functionName,
-  }) = FunctionsErrorState;
+class FunctionsInvokedState extends FunctionsState {
+  const FunctionsInvokedState({
+    required this.functionName,
+    required this.response,
+  });
+
+  final String functionName;
+  final FunctionResponse response;
+}
+
+class FunctionsErrorState extends FunctionsState {
+  const FunctionsErrorState({
+    required this.message,
+    this.code,
+    this.functionName,
+  });
+
+  final String message;
+  final String? code;
+  final String? functionName;
 }
 
 /// Extension for FunctionsState to add convenience methods
@@ -28,15 +41,18 @@ extension FunctionsStateX on FunctionsState {
   bool get isError => this is FunctionsErrorState;
   bool get hasInvokedResult => this is FunctionsInvokedState;
 
-  String? get error => whenOrNull(
-        error: (message, code, functionName) => message,
-      );
+  String? get error => switch (this) {
+    FunctionsErrorState(message: final message) => message,
+    _ => null,
+  };
 
-  String? get errorCode => whenOrNull(
-        error: (message, code, functionName) => code,
-      );
+  String? get errorCode => switch (this) {
+    FunctionsErrorState(code: final code) => code,
+    _ => null,
+  };
 
-  FunctionResponse? get invokeResult => whenOrNull(
-        invoked: (functionName, response) => response,
-      );
+  FunctionResponse? get invokeResult => switch (this) {
+    FunctionsInvokedState(response: final response) => response,
+    _ => null,
+  };
 }

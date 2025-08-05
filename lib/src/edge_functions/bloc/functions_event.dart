@@ -1,15 +1,19 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-
-part 'functions_event.freezed.dart';
-
 /// Edge functions events for invocation only
-@freezed
-class FunctionsEvent with _$FunctionsEvent {
-  // Function invocation (the only operation supported)
-  const factory FunctionsEvent.invoke({
-    required String functionName,
-    @Default('POST') String method,
-    dynamic body,
-    Map<String, String>? headers,
-  }) = FunctionsInvokeEvent;
+sealed class FunctionsEvent {
+  const FunctionsEvent();
+}
+
+// Function invocation (the only operation supported)
+class FunctionsInvokeEvent extends FunctionsEvent {
+  const FunctionsInvokeEvent({
+    required this.functionName,
+    this.method = 'POST',
+    this.body,
+    this.headers,
+  });
+
+  final String functionName;
+  final String method;
+  final dynamic body;
+  final Map<String, String>? headers;
 }

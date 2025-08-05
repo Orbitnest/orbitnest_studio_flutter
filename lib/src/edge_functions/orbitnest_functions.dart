@@ -12,7 +12,7 @@ class OrbitNestFunctions extends ChangeNotifier {
   final FunctionsBloc _functionsBloc;
   late final StreamSubscription _stateSubscription;
 
-  FunctionsState _currentState = const FunctionsState.initial();
+  FunctionsState _currentState = const FunctionsInitialState();
   final Map<String, Completer<dynamic>> _pendingOperations = {};
   int _operationCounter = 0;
 
@@ -26,17 +26,23 @@ class OrbitNestFunctions extends ChangeNotifier {
     notifyListeners();
 
     // Complete pending operations based on state changes
-    state.when(
-      invoked: (functionName, response) {
+    switch (state) {
+      case FunctionsInvokedState(response: final response):
         _completePendingOperation('invoked', response);
-      },
-      error: (message, code, functionName) {
+        break;
+      case FunctionsErrorState(
+          :final message,
+          :final code,
+          :final functionName
+        ):
         _completePendingOperationWithError('functions_error',
             FunctionException(message, code: code, functionName: functionName));
-      },
-      initial: () {},
-      loading: () {},
-    );
+        break;
+      case FunctionsInitialState():
+        break;
+      case FunctionsLoadingState():
+        break;
+    }
   }
 
   void _completePendingOperation(String key, dynamic result) {
@@ -104,7 +110,7 @@ class OrbitNestFunctions extends ChangeNotifier {
     Map<String, String>? headers,
   }) async {
     return await _executeWithCompleter<FunctionResponse>(
-      FunctionsEvent.invoke(
+      FunctionsInvokeEvent(
         functionName: functionName,
         method: method,
         body: body,
