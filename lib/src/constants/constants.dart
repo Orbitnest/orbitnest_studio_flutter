@@ -2,7 +2,7 @@
 class OrbitNestConstants {
   // Package info
   static const String packageName = 'orbitnest_studio_package';
-  static const String version = '1.0.0';
+  static const String version = '1.0.3';
 
   // Storage keys
   static const String accessTokenKey = 'orbitnest_access_token';
@@ -13,9 +13,9 @@ class OrbitNestConstants {
   static const String projectSlugKey = 'orbitnest_project_slug';
 
   // Default timeouts (in seconds)
-  static const int defaultConnectTimeout = 30;
-  static const int defaultReceiveTimeout = 30;
-  static const int defaultSendTimeout = 30;
+  static const int defaultConnectTimeout = 60;
+  static const int defaultReceiveTimeout = 60;
+  static const int defaultSendTimeout = 60;
 
   // Token refresh settings
   static const int tokenRefreshThreshold = 300; // 5 minutes in seconds

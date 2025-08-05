@@ -1,5 +1,6 @@
 import 'package:dio/dio.dart';
 import '../auth/services/token_manager.dart';
+import '../utils/env_config.dart';
 import 'interceptors/auth_interceptor.dart';
 import 'interceptors/error_interceptor.dart';
 import 'interceptors/logging_interceptor.dart';
@@ -14,11 +15,12 @@ class OrbitNestHttpClient {
     required this.baseUrl,
     required TokenManager tokenManager,
   }) : _tokenManager = tokenManager {
+    final timeoutMs = EnvConfig.apiTimeout;
     _dio = Dio(BaseOptions(
       baseUrl: baseUrl,
-      connectTimeout: const Duration(seconds: 30),
-      receiveTimeout: const Duration(seconds: 30),
-      sendTimeout: const Duration(seconds: 30),
+      connectTimeout: Duration(milliseconds: timeoutMs),
+      receiveTimeout: Duration(milliseconds: timeoutMs),
+      sendTimeout: Duration(milliseconds: timeoutMs),
       headers: {
         'Content-Type': 'application/json',
         'Accept': 'application/json',
