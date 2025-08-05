@@ -35,8 +35,13 @@ class OrbitNestFunctions extends ChangeNotifier {
           :final code,
           :final functionName
         ):
-        _completePendingOperationWithError('functions_error',
-            FunctionException(message, code: code, functionName: functionName));
+        // Complete all pending operations with the error
+        final error =
+            FunctionException(message, code: code, functionName: functionName);
+        final pendingKeys = List<String>.from(_pendingOperations.keys);
+        for (final key in pendingKeys) {
+          _completePendingOperationWithError(key, error);
+        }
         break;
       case FunctionsInitialState():
         break;

@@ -47,8 +47,12 @@ class OrbitNestAuth extends ChangeNotifier {
         _completePendingOperation('unauthenticated', null);
         break;
       case AuthErrorState(:final message, :final code):
-        _completePendingOperationWithError(
-            'auth_error', AuthException(message, code: code));
+        // Complete all pending operations with the error
+        final error = AuthException(message, code: code);
+        final pendingKeys = List<String>.from(_pendingOperations.keys);
+        for (final key in pendingKeys) {
+          _completePendingOperationWithError(key, error);
+        }
         break;
       case AuthInitialState():
         break;
