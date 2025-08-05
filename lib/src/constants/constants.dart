@@ -2,7 +2,7 @@
 class OrbitNestConstants {
   // Package info
   static const String packageName = 'orbitnest_studio_package';
-  static const String version = '1.0.3';
+  static const String version = '1.0.4';
 
   // Storage keys
   static const String accessTokenKey = 'orbitnest_access_token';

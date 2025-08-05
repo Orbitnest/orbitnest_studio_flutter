@@ -46,7 +46,7 @@ class AuthService {
         Endpoints.projectVerifySignup(_projectId),
         data: {
           'email': email,
-          'token': token,
+          'code': token,
           if (password != null) 'password': password,
         },
       );
@@ -85,7 +85,7 @@ class AuthService {
         Endpoints.projectVerifySignin(_projectId),
         data: {
           'email': email,
-          'token': token,
+          'code': token,
         },
       );
 
@@ -228,7 +228,7 @@ class AuthService {
         Endpoints.projectResetPassword(_projectId),
         data: {
           'email': email,
-          'token': token,
+          'code': token,
           'password': password,
         },
       );

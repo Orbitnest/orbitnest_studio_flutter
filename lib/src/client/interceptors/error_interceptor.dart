@@ -48,9 +48,23 @@ class ErrorInterceptor extends Interceptor {
         );
         break;
       case DioExceptionType.unknown:
+        // Handle timeout and other unknown errors more gracefully
+        String message = 'Unknown error';
+        String code = ErrorCodes.unknownError;
+        
+        if (err.message?.toLowerCase().contains('timeout') == true ||
+            err.error?.toString().toLowerCase().contains('timeout') == true) {
+          message = 'Operation timeout';
+          code = ErrorCodes.operationTimeout;
+        } else if (err.message != null && err.message!.isNotEmpty) {
+          message = 'Unknown error: ${err.message}';
+        } else if (err.error != null) {
+          message = 'Unknown error: ${err.error}';
+        }
+        
         exception = OrbitNestException(
-          'Unknown error: ${err.message}',
-          code: ErrorCodes.unknownError,
+          message,
+          code: code,
         );
         break;
     }
