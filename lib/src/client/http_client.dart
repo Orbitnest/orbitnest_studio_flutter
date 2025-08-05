@@ -26,7 +26,7 @@ class OrbitNestHttpClient {
         'Accept': 'application/json',
         // Security headers
         'X-Requested-With': 'XMLHttpRequest',
-        'X-Client-Info': 'orbitnest_studio_flutter/1.0.6',
+        'X-Client-Info': 'orbitnest-flutter/1.0.7',
         'Cache-Control': 'no-cache, no-store, must-revalidate',
         'Pragma': 'no-cache',
         'Expires': '0',
