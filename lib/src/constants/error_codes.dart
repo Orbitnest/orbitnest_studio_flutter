@@ -30,6 +30,7 @@ class ErrorCodes {
   static const String tokenExpired = 'TOKEN_EXPIRED';
   static const String signupDisabled = 'SIGNUP_DISABLED';
   static const String signinDisabled = 'SIGNIN_DISABLED';
+  static const String operationTimeout = 'OPERATION_TIMEOUT';
 
   // Database errors
   static const String tableNotFound = 'TABLE_NOT_FOUND';

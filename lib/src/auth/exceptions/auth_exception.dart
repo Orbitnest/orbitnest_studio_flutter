@@ -1,4 +1,5 @@
 import '../../client/interceptors/error_interceptor.dart';
+import '../../constants/error_codes.dart';
 
 /// Authentication-specific exception
 class AuthException extends OrbitNestException {
@@ -17,6 +18,15 @@ class AuthException extends OrbitNestException {
     }
 
     if (error is OrbitNestException) {
+      // Convert timeout errors to more specific auth timeout
+      if (error.code == ErrorCodes.connectionTimeout || 
+          error.code == ErrorCodes.sendTimeout || 
+          error.code == ErrorCodes.receiveTimeout ||
+          error.code == ErrorCodes.operationTimeout ||
+          error.message.toLowerCase().contains('timeout')) {
+        return AuthException.timeout(error.message);
+      }
+      
       return AuthException(
         error.message,
         code: error.code,
@@ -115,6 +125,13 @@ class AuthException extends OrbitNestException {
       message ?? 'Access forbidden',
       code: 'FORBIDDEN',
       statusCode: 403,
+    );
+  }
+
+  factory AuthException.timeout([String? message]) {
+    return AuthException(
+      message ?? 'Operation timeout',
+      code: ErrorCodes.operationTimeout,
     );
   }
 
