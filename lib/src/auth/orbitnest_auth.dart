@@ -78,14 +78,7 @@ class OrbitNestAuth extends ChangeNotifier {
 
     _authBloc.add(event);
 
-    // Add timeout
-    Timer(const Duration(seconds: 30), () {
-      if (!completer.isCompleted) {
-        _pendingOperations.remove(operationKey);
-        completer.completeError(const AuthException('Operation timeout'));
-      }
-    });
-
+    // No manual timeout - rely only on Dio client timeout
     return completer.future;
   }
 

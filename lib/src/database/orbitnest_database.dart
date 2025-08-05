@@ -118,17 +118,7 @@ class OrbitNestDatabase extends ChangeNotifier {
 
     _databaseBloc.add(event);
 
-    // Add timeout
-    Timer(const Duration(seconds: 30), () {
-      if (!completer.isCompleted) {
-        _pendingOperations.remove(operationKey);
-        completer.completeError(TimeoutException(
-          'Database operation timed out',
-          const Duration(seconds: 30),
-        ));
-      }
-    });
-
+    // No manual timeout - rely only on Dio client timeout
     return completer.future;
   }
 

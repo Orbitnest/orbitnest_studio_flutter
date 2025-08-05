@@ -81,18 +81,7 @@ class OrbitNestFunctions extends ChangeNotifier {
 
     _functionsBloc.add(event);
 
-    // Add timeout
-    Timer(const Duration(seconds: 60), () {
-      // Longer timeout for functions
-      if (!completer.isCompleted) {
-        _pendingOperations.remove(operationKey);
-        completer.completeError(TimeoutException(
-          'Function invocation timed out',
-          const Duration(seconds: 60),
-        ));
-      }
-    });
-
+    // No manual timeout - rely only on Dio client timeout
     return completer.future;
   }
 

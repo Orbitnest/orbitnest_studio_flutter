@@ -9,7 +9,7 @@ class EnvConfig {
   /// Must be called before using any environment variables
   static Future<void> initialize({String? envFileName}) async {
     if (_initialized) return;
-    
+
     try {
       await dotenv.load(fileName: envFileName ?? '.env');
       _initialized = true;
@@ -68,11 +68,11 @@ class EnvConfig {
     return debug?.toLowerCase() == 'true';
   }
 
-  /// Get API timeout in milliseconds
+  /// Get API timeout in milliseconds (3 minutes default)
   static int get apiTimeout {
     _ensureInitialized();
     final timeout = dotenv.env['ORBITNEST_API_TIMEOUT'];
-    return int.tryParse(timeout ?? '30000') ?? 30000;
+    return int.tryParse(timeout ?? '180000') ?? 180000; // 3 minutes default
   }
 
   static void _ensureInitialized() {
