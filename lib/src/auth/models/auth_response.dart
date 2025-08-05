@@ -24,13 +24,33 @@ class AuthResponse {
   final String? actionLink;
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
+    // Check if session data is nested in a 'session' object or at root level
+    Session? session;
+
+    if (json['session'] != null) {
+      // Session data is nested in a 'session' object
+      session = Session.fromJson(json['session'] as Map<String, dynamic>);
+    } else if (json['access_token'] != null &&
+        json['refresh_token'] != null &&
+        json['user'] != null) {
+      // Session data is at root level (current API format)
+      session = Session.fromJson({
+        'access_token': json['access_token'],
+        'refresh_token': json['refresh_token'],
+        'expires_in': json['expires_in'] ?? 900,
+        'expires_at': json['expires_at'],
+        'token_type': json['token_type'] ?? 'Bearer',
+        'user': json['user'],
+        'provider_token': json['provider_token'],
+        'provider_refresh_token': json['provider_refresh_token'],
+      });
+    }
+
     return AuthResponse(
-      user: json['user'] != null 
+      user: json['user'] != null
           ? User.fromJson(json['user'] as Map<String, dynamic>)
           : null,
-      session: json['session'] != null 
-          ? Session.fromJson(json['session'] as Map<String, dynamic>)
-          : null,
+      session: session,
       otpSent: json['otp_sent'] as bool?,
       email: json['email'] as String?,
       message: json['message'] as String?,
@@ -139,10 +159,10 @@ class AuthOperationSuccess extends AuthOperationResult {
 
   factory AuthOperationSuccess.fromJson(Map<String, dynamic> json) {
     return AuthOperationSuccess(
-      user: json['user'] != null 
+      user: json['user'] != null
           ? User.fromJson(json['user'] as Map<String, dynamic>)
           : null,
-      session: json['session'] != null 
+      session: json['session'] != null
           ? Session.fromJson(json['session'] as Map<String, dynamic>)
           : null,
       message: json['message'] as String?,
