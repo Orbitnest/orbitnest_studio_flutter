@@ -42,33 +42,37 @@ class User {
     return User(
       id: json['id'] as String,
       email: json['email'] as String,
-      emailConfirmedAt: json['email_confirmed_at'] != null 
-          ? DateTime.parse(json['email_confirmed_at'] as String)
+      emailConfirmedAt: json['email_confirmed_at'] != null
+          ? DateTime.tryParse(json['email_confirmed_at'].toString())
           : null,
-      phoneConfirmedAt: json['phone_confirmed_at'] != null 
-          ? DateTime.parse(json['phone_confirmed_at'] as String)
+      phoneConfirmedAt: json['phone_confirmed_at'] != null
+          ? DateTime.tryParse(json['phone_confirmed_at'].toString())
           : null,
-      lastSignInAt: json['last_sign_in_at'] != null 
-          ? DateTime.parse(json['last_sign_in_at'] as String)
+      lastSignInAt: json['last_sign_in_at'] != null
+          ? DateTime.tryParse(json['last_sign_in_at'].toString())
           : null,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.tryParse(json['updated_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
       userMetadata: json['user_metadata'] as Map<String, dynamic>?,
       appMetadata: json['app_metadata'] as Map<String, dynamic>?,
       phone: json['phone'] as String?,
       role: json['role'] as String?,
-      confirmationSentAt: json['confirmation_sent_at'] != null 
-          ? DateTime.parse(json['confirmation_sent_at'] as String)
+      confirmationSentAt: json['confirmation_sent_at'] != null
+          ? DateTime.tryParse(json['confirmation_sent_at'].toString())
           : null,
-      recoverySentAt: json['recovery_sent_at'] != null 
-          ? DateTime.parse(json['recovery_sent_at'] as String)
+      recoverySentAt: json['recovery_sent_at'] != null
+          ? DateTime.tryParse(json['recovery_sent_at'].toString())
           : null,
-      emailChangeSentAt: json['email_change_sent_at'] != null 
-          ? DateTime.parse(json['email_change_sent_at'] as String)
+      emailChangeSentAt: json['email_change_sent_at'] != null
+          ? DateTime.tryParse(json['email_change_sent_at'].toString())
           : null,
       newEmail: json['new_email'] as String?,
-      invitedAt: json['invited_at'] != null 
-          ? DateTime.parse(json['invited_at'] as String)
+      invitedAt: json['invited_at'] != null
+          ? DateTime.tryParse(json['invited_at'].toString())
           : null,
       actionLink: json['action_link'] as String?,
     );
@@ -78,18 +82,24 @@ class User {
     return {
       'id': id,
       'email': email,
-      if (emailConfirmedAt != null) 'email_confirmed_at': emailConfirmedAt!.toIso8601String(),
-      if (phoneConfirmedAt != null) 'phone_confirmed_at': phoneConfirmedAt!.toIso8601String(),
-      if (lastSignInAt != null) 'last_sign_in_at': lastSignInAt!.toIso8601String(),
+      if (emailConfirmedAt != null)
+        'email_confirmed_at': emailConfirmedAt!.toIso8601String(),
+      if (phoneConfirmedAt != null)
+        'phone_confirmed_at': phoneConfirmedAt!.toIso8601String(),
+      if (lastSignInAt != null)
+        'last_sign_in_at': lastSignInAt!.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
       if (userMetadata != null) 'user_metadata': userMetadata,
       if (appMetadata != null) 'app_metadata': appMetadata,
       if (phone != null) 'phone': phone,
       if (role != null) 'role': role,
-      if (confirmationSentAt != null) 'confirmation_sent_at': confirmationSentAt!.toIso8601String(),
-      if (recoverySentAt != null) 'recovery_sent_at': recoverySentAt!.toIso8601String(),
-      if (emailChangeSentAt != null) 'email_change_sent_at': emailChangeSentAt!.toIso8601String(),
+      if (confirmationSentAt != null)
+        'confirmation_sent_at': confirmationSentAt!.toIso8601String(),
+      if (recoverySentAt != null)
+        'recovery_sent_at': recoverySentAt!.toIso8601String(),
+      if (emailChangeSentAt != null)
+        'email_change_sent_at': emailChangeSentAt!.toIso8601String(),
       if (newEmail != null) 'new_email': newEmail,
       if (invitedAt != null) 'invited_at': invitedAt!.toIso8601String(),
       if (actionLink != null) 'action_link': actionLink,
@@ -129,19 +139,23 @@ class AdminUser {
     return AdminUser(
       id: json['id'] as String,
       email: json['email'] as String,
-      emailConfirmedAt: json['email_confirmed_at'] != null 
-          ? DateTime.parse(json['email_confirmed_at'] as String)
+      emailConfirmedAt: json['email_confirmed_at'] != null
+          ? DateTime.tryParse(json['email_confirmed_at'].toString())
           : null,
-      createdAt: DateTime.parse(json['created_at'] as String),
-      updatedAt: DateTime.parse(json['updated_at'] as String),
-      lastSignInAt: json['last_sign_in_at'] != null 
-          ? DateTime.parse(json['last_sign_in_at'] as String)
+      createdAt: json['created_at'] != null
+          ? DateTime.tryParse(json['created_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      updatedAt: json['updated_at'] != null
+          ? DateTime.tryParse(json['updated_at'].toString()) ?? DateTime.now()
+          : DateTime.now(),
+      lastSignInAt: json['last_sign_in_at'] != null
+          ? DateTime.tryParse(json['last_sign_in_at'].toString())
           : null,
       userMetadata: json['user_metadata'] as Map<String, dynamic>?,
       appMetadata: json['app_metadata'] as Map<String, dynamic>?,
       role: json['role'] as String?,
       banned: json['banned'] as bool?,
-      banDuration: json['ban_duration'] != null 
+      banDuration: json['ban_duration'] != null
           ? Duration(seconds: json['ban_duration'] as int)
           : null,
     );
@@ -151,10 +165,12 @@ class AdminUser {
     return {
       'id': id,
       'email': email,
-      if (emailConfirmedAt != null) 'email_confirmed_at': emailConfirmedAt!.toIso8601String(),
+      if (emailConfirmedAt != null)
+        'email_confirmed_at': emailConfirmedAt!.toIso8601String(),
       'created_at': createdAt.toIso8601String(),
       'updated_at': updatedAt.toIso8601String(),
-      if (lastSignInAt != null) 'last_sign_in_at': lastSignInAt!.toIso8601String(),
+      if (lastSignInAt != null)
+        'last_sign_in_at': lastSignInAt!.toIso8601String(),
       if (userMetadata != null) 'user_metadata': userMetadata,
       if (appMetadata != null) 'app_metadata': appMetadata,
       if (role != null) 'role': role,

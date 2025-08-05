@@ -31,6 +31,7 @@ class ErrorCodes {
   static const String signupDisabled = 'SIGNUP_DISABLED';
   static const String signinDisabled = 'SIGNIN_DISABLED';
   static const String operationTimeout = 'OPERATION_TIMEOUT';
+  static const String responseParseError = 'RESPONSE_PARSE_ERROR';
 
   // Database errors
   static const String tableNotFound = 'TABLE_NOT_FOUND';
