@@ -1,26 +1,76 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
 import 'user.dart';
 
-part 'session.freezed.dart';
-part 'session.g.dart';
-
 /// Session model representing an authenticated session
-@freezed
-class Session with _$Session {
-  const factory Session({
-    @JsonKey(name: 'access_token') required String accessToken,
-    @JsonKey(name: 'refresh_token') required String refreshToken,
-    @JsonKey(name: 'expires_in') required int expiresIn,
-    @JsonKey(name: 'expires_at') int? expiresAt,
-    @JsonKey(name: 'token_type') required String tokenType,
-    required User user,
-    @JsonKey(name: 'provider_token') String? providerToken,
-    @JsonKey(name: 'provider_refresh_token') String? providerRefreshToken,
-  }) = _Session;
+class Session {
+  const Session({
+    required this.accessToken,
+    required this.refreshToken,
+    required this.expiresIn,
+    this.expiresAt,
+    required this.tokenType,
+    required this.user,
+    this.providerToken,
+    this.providerRefreshToken,
+  });
 
-  const Session._();
+  final String accessToken;
+  final String refreshToken;
+  final int expiresIn;
+  final int? expiresAt;
+  final String tokenType;
+  final User user;
+  final String? providerToken;
+  final String? providerRefreshToken;
 
-  factory Session.fromJson(Map<String, dynamic> json) => _$SessionFromJson(json);
+  factory Session.fromJson(Map<String, dynamic> json) {
+    return Session(
+      accessToken: json['access_token'] as String,
+      refreshToken: json['refresh_token'] as String,
+      expiresIn: json['expires_in'] as int,
+      expiresAt: json['expires_at'] as int?,
+      tokenType: json['token_type'] as String,
+      user: User.fromJson(json['user'] as Map<String, dynamic>),
+      providerToken: json['provider_token'] as String?,
+      providerRefreshToken: json['provider_refresh_token'] as String?,
+    );
+  }
+
+  Map<String, dynamic> toJson() {
+    return {
+      'access_token': accessToken,
+      'refresh_token': refreshToken,
+      'expires_in': expiresIn,
+      if (expiresAt != null) 'expires_at': expiresAt,
+      'token_type': tokenType,
+      'user': user.toJson(),
+      if (providerToken != null) 'provider_token': providerToken,
+      if (providerRefreshToken != null)
+        'provider_refresh_token': providerRefreshToken,
+    };
+  }
+
+  /// Create a copy of this session with some fields replaced
+  Session copyWith({
+    String? accessToken,
+    String? refreshToken,
+    int? expiresIn,
+    int? expiresAt,
+    String? tokenType,
+    User? user,
+    String? providerToken,
+    String? providerRefreshToken,
+  }) {
+    return Session(
+      accessToken: accessToken ?? this.accessToken,
+      refreshToken: refreshToken ?? this.refreshToken,
+      expiresIn: expiresIn ?? this.expiresIn,
+      expiresAt: expiresAt ?? this.expiresAt,
+      tokenType: tokenType ?? this.tokenType,
+      user: user ?? this.user,
+      providerToken: providerToken ?? this.providerToken,
+      providerRefreshToken: providerRefreshToken ?? this.providerRefreshToken,
+    );
+  }
 
   /// Check if the session is expired
   bool get isExpired {

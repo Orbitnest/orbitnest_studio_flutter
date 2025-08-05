@@ -13,7 +13,7 @@ class OrbitNestAuth extends ChangeNotifier {
   final AuthBloc _authBloc;
   late final StreamSubscription _stateSubscription;
 
-  AuthState _currentState = const AuthState.initial();
+  AuthState _currentState = const AuthInitialState();
   final Map<String, Completer<dynamic>> _pendingOperations = {};
 
   OrbitNestAuth(this._authBloc) {
@@ -26,33 +26,35 @@ class OrbitNestAuth extends ChangeNotifier {
     notifyListeners();
 
     // Complete pending operations based on state changes
-    state.when(
-      authenticated: (user, session) {
+    switch (state) {
+      case AuthAuthenticatedState(:final user, :final session):
         _completePendingOperation(
             'auth_success', {'user': user, 'session': session});
-      },
-      otpSent: (email, message, type) {
+        break;
+      case AuthOtpSentState(:final email, :final message, :final type):
         _completePendingOperation(
             'otp_sent', {'email': email, 'message': message, 'type': type});
-      },
-      passwordResetSent: (email, message) {
+        break;
+      case AuthPasswordResetSentState(:final email, :final message):
         _completePendingOperation(
             'password_reset_sent', {'email': email, 'message': message});
-      },
-      userUpdated: (user, message) {
+        break;
+      case AuthUserUpdatedState(:final user, :final message):
         _completePendingOperation(
             'user_updated', {'user': user, 'message': message});
-      },
-      unauthenticated: () {
+        break;
+      case AuthUnauthenticatedState():
         _completePendingOperation('unauthenticated', null);
-      },
-      error: (message, code, details) {
+        break;
+      case AuthErrorState(:final message, :final code):
         _completePendingOperationWithError(
             'auth_error', AuthException(message, code: code));
-      },
-      initial: () {},
-      loading: () {},
-    );
+        break;
+      case AuthInitialState():
+        break;
+      case AuthLoadingState():
+        break;
+    }
   }
 
   void _completePendingOperation(String key, dynamic result) {
@@ -89,24 +91,26 @@ class OrbitNestAuth extends ChangeNotifier {
 
   /// Get current user (null if not authenticated)
   User? get currentUser {
-    return _currentState.whenOrNull(
-      authenticated: (user, session) => user,
-    );
+    return switch (_currentState) {
+      AuthAuthenticatedState(:final user) => user,
+      _ => null,
+    };
   }
 
   /// Get current session (null if not authenticated)
   Session? get currentSession {
-    return _currentState.whenOrNull(
-      authenticated: (user, session) => session,
-    );
+    return switch (_currentState) {
+      AuthAuthenticatedState(:final session) => session,
+      _ => null,
+    };
   }
 
   /// Check if user is currently authenticated
   bool get isAuthenticated {
-    return _currentState.whenOrNull(
-          authenticated: (user, session) => true,
-        ) ??
-        false;
+    return switch (_currentState) {
+      AuthAuthenticatedState() => true,
+      _ => false,
+    };
   }
 
   /// Get current auth state for UI reactivity
@@ -121,7 +125,7 @@ class OrbitNestAuth extends ChangeNotifier {
       {Map<String, dynamic>? metadata}) async {
     return await _executeWithCompleter<Map<String, dynamic>>(
       'otp_sent',
-      AuthEvent.signUpWithEmail(email: email, data: metadata),
+      AuthSignUpWithEmailEvent(email: email, data: metadata),
     );
   }
 
@@ -134,7 +138,7 @@ class OrbitNestAuth extends ChangeNotifier {
   }) async {
     return await _executeWithCompleter<Map<String, dynamic>>(
       'auth_success',
-      AuthEvent.verifySignUp(email: email, token: otp, password: password),
+      AuthVerifySignUpEvent(email: email, token: otp, password: password),
     );
   }
 
@@ -143,7 +147,7 @@ class OrbitNestAuth extends ChangeNotifier {
   Future<Map<String, dynamic>> signInWithEmail(String email) async {
     return await _executeWithCompleter<Map<String, dynamic>>(
       'otp_sent',
-      AuthEvent.signInWithEmail(email: email),
+      AuthSignInWithEmailEvent(email: email),
     );
   }
 
@@ -155,7 +159,7 @@ class OrbitNestAuth extends ChangeNotifier {
   }) async {
     return await _executeWithCompleter<Map<String, dynamic>>(
       'auth_success',
-      AuthEvent.verifySignIn(email: email, token: otp),
+      AuthVerifySignInEvent(email: email, token: otp),
     );
   }
 
@@ -168,7 +172,7 @@ class OrbitNestAuth extends ChangeNotifier {
   }) async {
     return await _executeWithCompleter<Map<String, dynamic>>(
       'auth_success',
-      AuthEvent.signUp(email: email, password: password, data: metadata),
+      AuthSignUpEvent(email: email, password: password, data: metadata),
     );
   }
 
@@ -180,7 +184,7 @@ class OrbitNestAuth extends ChangeNotifier {
   }) async {
     return await _executeWithCompleter<Map<String, dynamic>>(
       'auth_success',
-      AuthEvent.signInWithPassword(email: email, password: password),
+      AuthSignInWithPasswordEvent(email: email, password: password),
     );
   }
 
@@ -189,7 +193,7 @@ class OrbitNestAuth extends ChangeNotifier {
   Future<Map<String, dynamic>> resetPasswordForEmail(String email) async {
     return await _executeWithCompleter<Map<String, dynamic>>(
       'password_reset_sent',
-      AuthEvent.resetPasswordForEmail(email: email),
+      AuthResetPasswordForEmailEvent(email: email),
     );
   }
 
@@ -202,7 +206,7 @@ class OrbitNestAuth extends ChangeNotifier {
   }) async {
     return await _executeWithCompleter<Map<String, dynamic>>(
       'auth_success',
-      AuthEvent.updatePassword(
+      AuthUpdatePasswordEvent(
           email: email, token: token, password: newPassword),
     );
   }
@@ -216,7 +220,7 @@ class OrbitNestAuth extends ChangeNotifier {
   }) async {
     return await _executeWithCompleter<Map<String, dynamic>>(
       'user_updated',
-      AuthEvent.updateUser(email: email, password: password, data: metadata),
+      AuthUpdateUserEvent(email: email, password: password, data: metadata),
     );
   }
 
@@ -225,7 +229,7 @@ class OrbitNestAuth extends ChangeNotifier {
   Future<Map<String, dynamic>> refreshSession() async {
     return await _executeWithCompleter<Map<String, dynamic>>(
       'auth_success',
-      const AuthEvent.refreshSession(),
+      const AuthRefreshSessionEvent(),
     );
   }
 
@@ -234,7 +238,7 @@ class OrbitNestAuth extends ChangeNotifier {
   Future<void> signOut() async {
     await _executeWithCompleter<void>(
       'unauthenticated',
-      const AuthEvent.signOut(),
+      const AuthSignOutEvent(),
     );
   }
 
@@ -248,7 +252,7 @@ class OrbitNestAuth extends ChangeNotifier {
     // Trigger getUser event and wait for result
     final result = await _executeWithCompleter<Map<String, dynamic>>(
       'auth_success',
-      const AuthEvent.getUser(),
+      const AuthGetUserEvent(),
     );
 
     return result['user'] as User;

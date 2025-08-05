@@ -14,7 +14,7 @@ class OrbitNestDatabase extends ChangeNotifier {
   final String _projectId;
   late final StreamSubscription _stateSubscription;
 
-  DatabaseState _currentState = const DatabaseState.initial();
+  DatabaseState _currentState = const DatabaseInitialState();
   final Map<String, Completer<dynamic>> _pendingOperations = {};
   int _operationCounter = 0;
 
@@ -28,51 +28,58 @@ class OrbitNestDatabase extends ChangeNotifier {
     notifyListeners();
 
     // Complete pending operations based on state changes
-    state.when(
-      initial: () {},
-      loading: () {},
-      sqlExecuted: (result, rowsAffected) {
+    switch (state) {
+      case DatabaseInitialState():
+        break;
+      case DatabaseLoadingState():
+        break;
+      case DatabaseSqlExecutedState(:final result, :final rowsAffected):
         _completePendingOperation(
             'db_success', PostgrestResponse(data: result, count: rowsAffected));
-      },
-      dataSelected: (table, response) {
+        break;
+      case DatabaseDataSelectedState(response: final response):
         _completePendingOperation('db_success', response);
-      },
-      dataInserted: (table, response) {
+        break;
+      case DatabaseDataInsertedState(response: final response):
         _completePendingOperation('db_success', response);
-      },
-      dataUpdated: (table, response) {
+        break;
+      case DatabaseDataUpdatedState(response: final response):
         _completePendingOperation('db_success', response);
-      },
-      dataDeleted: (table, response) {
+        break;
+      case DatabaseDataDeletedState(response: final response):
         _completePendingOperation('db_success', response);
-      },
-      bulkInserted: (table, count) {
+        break;
+      case DatabaseBulkInsertedState(:final table, :final count):
         _completePendingOperation(
             'db_success',
             PostgrestResponse(data: [
               {'table': table, 'count': count}
             ]));
-      },
-      bulkUpdated: (table, count) {
+        break;
+      case DatabaseBulkUpdatedState(:final table, :final count):
         _completePendingOperation(
             'db_success',
             PostgrestResponse(data: [
               {'table': table, 'count': count}
             ]));
-      },
-      bulkDeleted: (table, count) {
+        break;
+      case DatabaseBulkDeletedState(:final table, :final count):
         _completePendingOperation(
             'db_success',
             PostgrestResponse(data: [
               {'table': table, 'count': count}
             ]));
-      },
-      error: (message, code, table, query, hint, details) {
+        break;
+      case DatabaseErrorState(
+          :final message,
+          :final code,
+          :final table,
+          :final query
+        ):
         _completePendingOperationWithError('db_error',
             DatabaseException(message, code: code, table: table, query: query));
-      },
-    );
+        break;
+    }
   }
 
   void _completePendingOperation(String key, dynamic result) {
@@ -153,7 +160,7 @@ class OrbitNestDatabase extends ChangeNotifier {
         filters?.map((key, value) => MapEntry(key, value.toString()));
 
     final result = await _executeWithCompleter<PostgrestResponse<dynamic>>(
-      DatabaseEvent.select(
+      DatabaseSelectEvent(
         table: table,
         columns: columns,
         filters: filtersMap,
@@ -177,7 +184,7 @@ class OrbitNestDatabase extends ChangeNotifier {
     bool upsert = false,
   }) async {
     final result = await _executeWithCompleter<PostgrestResponse<dynamic>>(
-      DatabaseEvent.insert(
+      DatabaseInsertEvent(
         table: table,
         values: values,
         upsert: upsert,
@@ -201,7 +208,7 @@ class OrbitNestDatabase extends ChangeNotifier {
         filters.map((key, value) => MapEntry(key, value.toString()));
 
     final result = await _executeWithCompleter<PostgrestResponse<dynamic>>(
-      DatabaseEvent.update(
+      DatabaseUpdateEvent(
         table: table,
         values: values,
         filters: filtersMap,
@@ -224,7 +231,7 @@ class OrbitNestDatabase extends ChangeNotifier {
         filters.map((key, value) => MapEntry(key, value.toString()));
 
     final result = await _executeWithCompleter<PostgrestResponse<dynamic>>(
-      DatabaseEvent.delete(
+      DatabaseDeleteEvent(
         table: table,
         filters: filtersMap,
       ),
@@ -243,7 +250,7 @@ class OrbitNestDatabase extends ChangeNotifier {
     List<Map<String, dynamic>> values,
   ) async {
     final result = await _executeWithCompleter<PostgrestResponse<dynamic>>(
-      DatabaseEvent.bulkInsert(
+      DatabaseBulkInsertEvent(
         table: table,
         values: values,
       ),
@@ -263,7 +270,7 @@ class OrbitNestDatabase extends ChangeNotifier {
     required Map<String, dynamic> filters,
   }) async {
     final result = await _executeWithCompleter<PostgrestResponse<dynamic>>(
-      DatabaseEvent.bulkUpdate(
+      DatabaseBulkUpdateEvent(
         table: table,
         values: [values], // Convert single value map to list format
         matchColumn: 'id', // Default match column
@@ -285,7 +292,7 @@ class OrbitNestDatabase extends ChangeNotifier {
     final ids = filters.values.toList();
 
     final result = await _executeWithCompleter<PostgrestResponse<dynamic>>(
-      DatabaseEvent.bulkDelete(
+      DatabaseBulkDeleteEvent(
         table: table,
         ids: ids,
       ),
@@ -304,7 +311,7 @@ class OrbitNestDatabase extends ChangeNotifier {
     List<dynamic>? parameters,
   }) async {
     final result = await _executeWithCompleter<PostgrestResponse<dynamic>>(
-      DatabaseEvent.executeSql(
+      DatabaseExecuteSqlEvent(
         sql: query,
         parameters: parameters,
       ),

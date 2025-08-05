@@ -13,7 +13,7 @@ class FunctionsBloc extends Bloc<FunctionsEvent, FunctionsState> {
   FunctionsBloc({
     required FunctionsRepository functionsRepository,
   })  : _functionsRepository = functionsRepository,
-        super(const FunctionsState.initial()) {
+        super(const FunctionsInitialState()) {
     // Register event handlers
     on<FunctionsInvokeEvent>(_onInvoke);
   }
@@ -22,7 +22,7 @@ class FunctionsBloc extends Bloc<FunctionsEvent, FunctionsState> {
     FunctionsInvokeEvent event,
     Emitter<FunctionsState> emit,
   ) async {
-    emit(const FunctionsState.loading());
+    emit(const FunctionsLoadingState());
 
     try {
       final response = await _functionsRepository.invoke(
@@ -32,12 +32,12 @@ class FunctionsBloc extends Bloc<FunctionsEvent, FunctionsState> {
         headers: event.headers,
       );
 
-      emit(FunctionsState.invoked(
+      emit(FunctionsInvokedState(
         functionName: event.functionName,
         response: response,
       ));
     } catch (e) {
-      emit(FunctionsState.error(
+      emit(FunctionsErrorState(
         message: _getErrorMessage(e),
         code: _getErrorCode(e),
         functionName: event.functionName,

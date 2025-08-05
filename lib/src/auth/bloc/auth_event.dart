@@ -1,73 +1,129 @@
-import 'package:freezed_annotation/freezed_annotation.dart';
-
-part 'auth_event.freezed.dart';
-
 /// Authentication events
-@freezed
-class AuthEvent with _$AuthEvent {
-  // Email-first OTP-based authentication
-  const factory AuthEvent.signUpWithEmail({
-    required String email,
-    Map<String, dynamic>? data,
-  }) = AuthSignUpWithEmailEvent;
+sealed class AuthEvent {
+  const AuthEvent();
+}
 
-  const factory AuthEvent.verifySignUp({
-    required String email,
-    required String token,
-    String? password,
-  }) = AuthVerifySignUpEvent;
+// Email-first OTP-based authentication
+class AuthSignUpWithEmailEvent extends AuthEvent {
+  const AuthSignUpWithEmailEvent({
+    required this.email,
+    this.data,
+  });
 
-  const factory AuthEvent.signInWithEmail({
-    required String email,
-  }) = AuthSignInWithEmailEvent;
+  final String email;
+  final Map<String, dynamic>? data;
+}
 
-  const factory AuthEvent.verifySignIn({
-    required String email,
-    required String token,
-  }) = AuthVerifySignInEvent;
+class AuthVerifySignUpEvent extends AuthEvent {
+  const AuthVerifySignUpEvent({
+    required this.email,
+    required this.token,
+    this.password,
+  });
 
-  // Traditional email/password authentication
-  const factory AuthEvent.signUp({
-    required String email,
-    required String password,
-    Map<String, dynamic>? data,
-  }) = AuthSignUpEvent;
+  final String email;
+  final String token;
+  final String? password;
+}
 
-  const factory AuthEvent.signInWithPassword({
-    required String email,
-    required String password,
-  }) = AuthSignInWithPasswordEvent;
+class AuthSignInWithEmailEvent extends AuthEvent {
+  const AuthSignInWithEmailEvent({
+    required this.email,
+  });
 
-  // Session management
-  const factory AuthEvent.signOut() = AuthSignOutEvent;
+  final String email;
+}
 
-  const factory AuthEvent.refreshSession({
-    String? refreshToken,
-  }) = AuthRefreshSessionEvent;
+class AuthVerifySignInEvent extends AuthEvent {
+  const AuthVerifySignInEvent({
+    required this.email,
+    required this.token,
+  });
 
-  // User management
-  const factory AuthEvent.updateUser({
-    String? email,
-    String? password,
-    Map<String, dynamic>? data,
-  }) = AuthUpdateUserEvent;
+  final String email;
+  final String token;
+}
 
-  const factory AuthEvent.getUser() = AuthGetUserEvent;
+// Traditional email/password authentication
+class AuthSignUpEvent extends AuthEvent {
+  const AuthSignUpEvent({
+    required this.email,
+    required this.password,
+    this.data,
+  });
 
-  // Password recovery
-  const factory AuthEvent.resetPasswordForEmail({
-    required String email,
-  }) = AuthResetPasswordForEmailEvent;
+  final String email;
+  final String password;
+  final Map<String, dynamic>? data;
+}
 
-  const factory AuthEvent.updatePassword({
-    required String email,
-    required String token,
-    required String password,
-  }) = AuthUpdatePasswordEvent;
+class AuthSignInWithPasswordEvent extends AuthEvent {
+  const AuthSignInWithPasswordEvent({
+    required this.email,
+    required this.password,
+  });
 
-  // Session initialization
-  const factory AuthEvent.initialize() = AuthInitializeEvent;
+  final String email;
+  final String password;
+}
 
-  // Clear error state
-  const factory AuthEvent.clearError() = AuthClearErrorEvent;
+// Session management
+class AuthSignOutEvent extends AuthEvent {
+  const AuthSignOutEvent();
+}
+
+class AuthRefreshSessionEvent extends AuthEvent {
+  const AuthRefreshSessionEvent({
+    this.refreshToken,
+  });
+
+  final String? refreshToken;
+}
+
+// User management
+class AuthUpdateUserEvent extends AuthEvent {
+  const AuthUpdateUserEvent({
+    this.email,
+    this.password,
+    this.data,
+  });
+
+  final String? email;
+  final String? password;
+  final Map<String, dynamic>? data;
+}
+
+class AuthGetUserEvent extends AuthEvent {
+  const AuthGetUserEvent();
+}
+
+// Password recovery
+class AuthResetPasswordForEmailEvent extends AuthEvent {
+  const AuthResetPasswordForEmailEvent({
+    required this.email,
+  });
+
+  final String email;
+}
+
+class AuthUpdatePasswordEvent extends AuthEvent {
+  const AuthUpdatePasswordEvent({
+    required this.email,
+    required this.token,
+    required this.password,
+  });
+
+  final String email;
+  final String token;
+  final String password;
+}
+
+// Session initialization
+class AuthInitializeEvent extends AuthEvent {
+  const AuthInitializeEvent();
+}
+
+// Clear error state
+class AuthClearErrorEvent extends AuthEvent {
+  const AuthClearErrorEvent();
 }
