@@ -14,9 +14,9 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   AuthBloc({
     required AuthRepository authRepository,
     required TokenManager tokenManager,
-  }) : _authRepository = authRepository,
-       _tokenManager = tokenManager,
-       super(const AuthInitialState()) {
+  })  : _authRepository = authRepository,
+        _tokenManager = tokenManager,
+        super(const AuthInitialState()) {
     // Register event handlers
     on<AuthSignUpWithEmailEvent>(_onSignUpWithEmail);
     on<AuthVerifySignUpEvent>(_onVerifySignUp);
@@ -261,16 +261,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           event.refreshToken ?? await _tokenManager.getRefreshToken();
 
       if (refreshToken == null) {
+        print('🔐 [AuthBloc] No refresh token available');
         emit(const AuthUnauthenticatedState());
         return;
       }
 
+      print('🔐 [AuthBloc] Refreshing session with token...');
       final response = await _authRepository.refreshSession(
         refreshToken: refreshToken,
       );
 
+      print(
+          '🔐 [AuthBloc] Refresh response - isAuthenticated: ${response.isAuthenticated}');
+
       if (response.isAuthenticated) {
         await _tokenManager.storeSession(response.session!);
+        print(
+            '🔐 [AuthBloc] Session refreshed successfully for: ${response.user?.email}');
         emit(
           AuthAuthenticatedState(
             user: response.user!,
@@ -278,10 +285,13 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           ),
         );
       } else {
+        print(
+            '🔐 [AuthBloc] Refresh failed - response not authenticated: ${response.message}');
         await _tokenManager.clearSession();
         emit(const AuthUnauthenticatedState());
       }
     } catch (e) {
+      print('🔐 [AuthBloc] Refresh session error: $e');
       await _tokenManager.clearSession();
       emit(const AuthUnauthenticatedState());
     }
