@@ -38,6 +38,25 @@ class User {
   final DateTime? invitedAt;
   final String? actionLink;
 
+  /// Safely extracts a string value from JSON, handling various types
+  static String? _parseStringField(dynamic value) {
+    if (value == null) return null;
+    if (value is String) return value;
+    if (value is List) return value.isNotEmpty ? value.first?.toString() : null;
+    return value.toString();
+  }
+
+  /// Safely extracts a Map from JSON, handling various types
+  static Map<String, dynamic>? _parseMapField(dynamic value) {
+    if (value == null) return null;
+    if (value is Map<String, dynamic>) return value;
+    if (value is Map) return Map<String, dynamic>.from(value);
+    if (value is List && value.isNotEmpty && value.first is Map) {
+      return Map<String, dynamic>.from(value.first as Map);
+    }
+    return null;
+  }
+
   factory User.fromJson(Map<String, dynamic> json) {
     return User(
       id: json['id'] as String,
@@ -57,10 +76,10 @@ class User {
       updatedAt: json['updated_at'] != null
           ? DateTime.tryParse(json['updated_at'].toString()) ?? DateTime.now()
           : DateTime.now(),
-      userMetadata: json['user_metadata'] as Map<String, dynamic>?,
-      appMetadata: json['app_metadata'] as Map<String, dynamic>?,
-      phone: json['phone'] as String?,
-      role: json['role'] as String?,
+      userMetadata: _parseMapField(json['user_metadata']),
+      appMetadata: _parseMapField(json['app_metadata']),
+      phone: _parseStringField(json['phone']),
+      role: _parseStringField(json['role']),
       confirmationSentAt: json['confirmation_sent_at'] != null
           ? DateTime.tryParse(json['confirmation_sent_at'].toString())
           : null,
@@ -70,11 +89,11 @@ class User {
       emailChangeSentAt: json['email_change_sent_at'] != null
           ? DateTime.tryParse(json['email_change_sent_at'].toString())
           : null,
-      newEmail: json['new_email'] as String?,
+      newEmail: _parseStringField(json['new_email']),
       invitedAt: json['invited_at'] != null
           ? DateTime.tryParse(json['invited_at'].toString())
           : null,
-      actionLink: json['action_link'] as String?,
+      actionLink: _parseStringField(json['action_link']),
     );
   }
 
@@ -151,11 +170,11 @@ class AdminUser {
       lastSignInAt: json['last_sign_in_at'] != null
           ? DateTime.tryParse(json['last_sign_in_at'].toString())
           : null,
-      userMetadata: json['user_metadata'] as Map<String, dynamic>?,
-      appMetadata: json['app_metadata'] as Map<String, dynamic>?,
-      role: json['role'] as String?,
-      banned: json['banned'] as bool?,
-      banDuration: json['ban_duration'] != null
+      userMetadata: User._parseMapField(json['user_metadata']),
+      appMetadata: User._parseMapField(json['app_metadata']),
+      role: User._parseStringField(json['role']),
+      banned: json['banned'] is bool ? json['banned'] as bool : null,
+      banDuration: json['ban_duration'] != null && json['ban_duration'] is int
           ? Duration(seconds: json['ban_duration'] as int)
           : null,
     );
