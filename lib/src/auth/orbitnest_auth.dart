@@ -28,20 +28,29 @@ class OrbitNestAuth extends ChangeNotifier {
     // Complete pending operations based on state changes
     switch (state) {
       case AuthAuthenticatedState(:final user, :final session):
-        _completePendingOperation(
-            'auth_success', {'user': user, 'session': session});
+        _completePendingOperation('auth_success', {
+          'user': user.toJson(),
+          'session': session.toJson(),
+        });
         break;
       case AuthOtpSentState(:final email, :final message, :final type):
-        _completePendingOperation(
-            'otp_sent', {'email': email, 'message': message, 'type': type});
+        _completePendingOperation('otp_sent', {
+          'email': email,
+          'message': message,
+          'type': type,
+        });
         break;
       case AuthPasswordResetSentState(:final email, :final message):
-        _completePendingOperation(
-            'password_reset_sent', {'email': email, 'message': message});
+        _completePendingOperation('password_reset_sent', {
+          'email': email,
+          'message': message,
+        });
         break;
       case AuthUserUpdatedState(:final user, :final message):
-        _completePendingOperation(
-            'user_updated', {'user': user, 'message': message});
+        _completePendingOperation('user_updated', {
+          'user': user.toJson(),
+          'message': message,
+        });
         break;
       case AuthUnauthenticatedState():
         _completePendingOperation('unauthenticated', null);
@@ -76,7 +85,9 @@ class OrbitNestAuth extends ChangeNotifier {
   }
 
   Future<T> _executeWithCompleter<T>(
-      String operationKey, AuthEvent event) async {
+    String operationKey,
+    AuthEvent event,
+  ) async {
     final completer = Completer<T>();
     _pendingOperations[operationKey] = completer;
 
@@ -118,8 +129,10 @@ class OrbitNestAuth extends ChangeNotifier {
 
   /// Sign up with email (OTP-based flow)
   /// Returns a map with email and message when OTP is sent
-  Future<Map<String, dynamic>> signUpWithEmail(String email,
-      {Map<String, dynamic>? metadata}) async {
+  Future<Map<String, dynamic>> signUpWithEmail(
+    String email, {
+    Map<String, dynamic>? metadata,
+  }) async {
     return await _executeWithCompleter<Map<String, dynamic>>(
       'otp_sent',
       AuthSignUpWithEmailEvent(email: email, data: metadata),
@@ -204,7 +217,10 @@ class OrbitNestAuth extends ChangeNotifier {
     return await _executeWithCompleter<Map<String, dynamic>>(
       'auth_success',
       AuthUpdatePasswordEvent(
-          email: email, token: token, password: newPassword),
+        email: email,
+        token: token,
+        password: newPassword,
+      ),
     );
   }
 
