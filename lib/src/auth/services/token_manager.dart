@@ -25,11 +25,9 @@ class TokenManager {
   static const int _maxTokenAge = 24; // hours
   static const int _refreshThresholdMinutes = 5;
 
-  TokenManager({
-    String? projectId,
-    String? apiKey,
-  })  : _projectId = projectId,
-        _apiKey = apiKey;
+  TokenManager({String? projectId, String? apiKey})
+    : _projectId = projectId,
+      _apiKey = apiKey;
 
   /// Store session securely with additional validation
   Future<void> storeSession(Session session) async {
@@ -42,8 +40,8 @@ class TokenManager {
 
       // Add session timestamp for tracking
       final sessionWithTimestamp = session.copyWith(
-          // Store when this session was saved locally
-          );
+        // Store when this session was saved locally
+      );
 
       final sessionJson = json.encode(sessionWithTimestamp.toJson());
 
@@ -77,6 +75,7 @@ class TokenManager {
   }
 
   /// Retrieve stored session with integrity verification
+  /// Note: This returns sessions even if access token is expired, to allow refresh
   Future<Session?> getStoredSession() async {
     try {
       final sessionJson = await _secureStorage.read(
@@ -94,7 +93,8 @@ class TokenManager {
         final currentChecksum = _generateChecksum(sessionJson);
         if (storedChecksum != currentChecksum) {
           OrbitNestLogger.warning(
-              'Session integrity check failed - clearing session');
+            'Session integrity check failed - clearing session',
+          );
           await clearSession();
           return null;
         }
@@ -103,11 +103,27 @@ class TokenManager {
       final sessionMap = json.decode(sessionJson) as Map<String, dynamic>;
       final session = Session.fromJson(sessionMap);
 
-      // Validate session is still valid
-      if (!_isValidSession(session)) {
-        OrbitNestLogger.debug('Retrieved invalid session - clearing');
+      // Only clear session if refresh token is also invalid/missing
+      // This allows the AuthBloc to attempt a refresh if access token is expired
+      if (session.refreshToken.isEmpty) {
+        OrbitNestLogger.debug('No refresh token available - clearing session');
         await clearSession();
         return null;
+      }
+
+      // Check if refresh token is expired (if we can decode it)
+      try {
+        if (session.refreshToken.isNotEmpty &&
+            isTokenExpired(session.refreshToken)) {
+          OrbitNestLogger.debug('Refresh token expired - clearing session');
+          await clearSession();
+          return null;
+        }
+      } catch (e) {
+        // If we can't decode the refresh token, don't clear - let the server validate
+        OrbitNestLogger.debug(
+          'Could not validate refresh token expiry, proceeding',
+        );
       }
 
       return session;
@@ -260,17 +276,21 @@ class TokenManager {
       final futures = <Future<void>>[];
 
       if (projectId != null) {
-        futures.add(_secureStorage.write(
-          key: OrbitNestConstants.projectIdKey,
-          value: projectId,
-        ));
+        futures.add(
+          _secureStorage.write(
+            key: OrbitNestConstants.projectIdKey,
+            value: projectId,
+          ),
+        );
       }
 
       if (projectSlug != null) {
-        futures.add(_secureStorage.write(
-          key: OrbitNestConstants.projectSlugKey,
-          value: projectSlug,
-        ));
+        futures.add(
+          _secureStorage.write(
+            key: OrbitNestConstants.projectSlugKey,
+            value: projectSlug,
+          ),
+        );
       }
 
       await Future.wait(futures);
@@ -369,7 +389,9 @@ class TokenManager {
   /// Check if token is about to expire and needs refresh
   bool needsRefresh(String token) {
     return isTokenExpiringWithin(
-        token, const Duration(minutes: _refreshThresholdMinutes));
+      token,
+      const Duration(minutes: _refreshThresholdMinutes),
+    );
   }
 
   /// Validate API key format
