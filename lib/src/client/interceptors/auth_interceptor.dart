@@ -1,4 +1,5 @@
 import 'package:dio/dio.dart';
+import 'package:flutter/foundation.dart';
 import '../../auth/services/token_manager.dart';
 
 /// Interceptor for handling authentication tokens
@@ -12,27 +13,36 @@ class AuthInterceptor extends Interceptor {
     try {
       // Check if this is an auth endpoint that doesn't need tokens
       if (_isAuthEndpoint(options.path)) {
+        debugPrint('🔓 [AuthInterceptor] Auth endpoint, skipping token: ${options.path}');
         handler.next(options);
         return;
       }
 
       // Get the current token
+      debugPrint('🔑 [AuthInterceptor] Getting access token for: ${options.path}');
       final token = await _tokenManager.getAccessToken();
+      debugPrint('🔑 [AuthInterceptor] Token retrieved: ${token != null ? "yes (${token.substring(0, 20)}...)" : "no"}');
+
       if (token != null) {
         options.headers['Authorization'] = 'Bearer $token';
+        debugPrint('✅ [AuthInterceptor] Added Authorization header');
       }
 
       // Add API key if available and no bearer token
       if (token == null) {
+        debugPrint('🔑 [AuthInterceptor] No token, trying API key...');
         final apiKey = await _tokenManager.getApiKey();
+        debugPrint('🔑 [AuthInterceptor] API key retrieved: ${apiKey != null ? "yes" : "no"}');
         if (apiKey != null) {
           options.headers['apikey'] = apiKey;
           options.headers['Authorization'] = 'Bearer $apiKey';
+          debugPrint('✅ [AuthInterceptor] Added API key as Authorization header');
         }
       }
 
       handler.next(options);
     } catch (e) {
+      debugPrint('❌ [AuthInterceptor] Error: $e');
       handler.next(options);
     }
   }
