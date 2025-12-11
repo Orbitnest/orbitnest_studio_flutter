@@ -24,6 +24,10 @@ class TokenManager {
   final String? _apiKey;
   static const int _maxTokenAge = 24; // hours
   static const int _refreshThresholdMinutes = 5;
+  // Cache tokens in memory for faster access
+  String? _cachedAccessToken;
+  String? _cachedRefreshToken;
+
 
   TokenManager({String? projectId, String? apiKey})
     : _projectId = projectId,
@@ -66,6 +70,10 @@ class TokenManager {
           value: session.refreshToken,
         ),
       ]);
+      
+      // Cache tokens in memory for faster access
+      _cachedAccessToken = session.accessToken;
+      _cachedRefreshToken = session.refreshToken;
 
       OrbitNestLogger.debug('Session stored securely');
     } catch (e) {
@@ -138,7 +146,16 @@ class TokenManager {
   /// Get current access token
   Future<String?> getAccessToken() async {
     try {
-      return await _secureStorage.read(key: OrbitNestConstants.accessTokenKey);
+      // Return cached token if available
+      if (_cachedAccessToken != null) {
+        return _cachedAccessToken;
+      }
+      // Otherwise read from secure storage and cache it
+      final token = await _secureStorage.read(key: OrbitNestConstants.accessTokenKey);
+      if (token != null) {
+        _cachedAccessToken = token;
+      }
+      return token;
     } catch (e) {
       return null;
     }
@@ -147,7 +164,16 @@ class TokenManager {
   /// Get current refresh token
   Future<String?> getRefreshToken() async {
     try {
-      return await _secureStorage.read(key: OrbitNestConstants.refreshTokenKey);
+      // Return cached token if available
+      if (_cachedRefreshToken != null) {
+        return _cachedRefreshToken;
+      }
+      // Otherwise read from secure storage and cache it
+      final token = await _secureStorage.read(key: OrbitNestConstants.refreshTokenKey);
+      if (token != null) {
+        _cachedRefreshToken = token;
+      }
+      return token;
     } catch (e) {
       return null;
     }
@@ -184,6 +210,10 @@ class TokenManager {
         _secureStorage.delete(key: OrbitNestConstants.accessTokenKey),
         _secureStorage.delete(key: OrbitNestConstants.refreshTokenKey),
       ]);
+      
+      // Clear cached tokens
+      _cachedAccessToken = null;
+      _cachedRefreshToken = null;
     } catch (e) {
       // Ignore errors when clearing
     }
@@ -320,6 +350,10 @@ class TokenManager {
   }
 
   /// Clear all stored data
+      
+      // Clear cached tokens
+      _cachedAccessToken = null;
+      _cachedRefreshToken = null;
   Future<void> clearAll() async {
     try {
       await _secureStorage.deleteAll();
