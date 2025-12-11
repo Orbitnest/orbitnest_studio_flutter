@@ -8,7 +8,7 @@ class AuthInterceptor extends Interceptor {
   AuthInterceptor(this._tokenManager);
 
   @override
-  void onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
+  Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     try {
       // Check if this is an auth endpoint that doesn't need tokens
       if (_isAuthEndpoint(options.path)) {
@@ -38,7 +38,7 @@ class AuthInterceptor extends Interceptor {
   }
 
   @override
-  void onError(DioException err, ErrorInterceptorHandler handler) async {
+  Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
     // Handle 401 errors by attempting to refresh the token
     if (err.response?.statusCode == 401) {
       try {
