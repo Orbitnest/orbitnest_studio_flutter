@@ -111,6 +111,10 @@ class TokenManager {
       final sessionMap = json.decode(sessionJson) as Map<String, dynamic>;
       final session = Session.fromJson(sessionMap);
 
+      // Cache tokens in memory for faster access during this session
+      _cachedAccessToken = session.accessToken;
+      _cachedRefreshToken = session.refreshToken;
+
       // Only clear session if refresh token is also invalid/missing
       // This allows the AuthBloc to attempt a refresh if access token is expired
       if (session.refreshToken.isEmpty) {
