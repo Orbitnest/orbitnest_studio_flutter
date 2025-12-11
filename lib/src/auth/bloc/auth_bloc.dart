@@ -419,18 +419,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       print('🔐 [AuthBloc] Session expires at: ${session.expiresAt}');
       print('🔐 [AuthBloc] Session isExpired: ${session.isExpired}');
 
-      // Check if access token is expired
-      final accessTokenExpired = _tokenManager.isTokenExpired(
-        session.accessToken,
-      );
-      print('🔐 [AuthBloc] Access token expired: $accessTokenExpired');
+      //       // Check if access token is expired
+      // NOTE: Skip access token expiration check on initialization
+      // Let the server validate the token - if it's expired, API will return 401
+      // This prevents false logouts when token might still be valid server-side
+      // TODO: Implement proper token refresh when backend endpoint is ready
 
-      if (accessTokenExpired) {
-        print('🔐 [AuthBloc] Attempting to refresh session...');
-        // Try to refresh the session
-        add(AuthRefreshSessionEvent(refreshToken: session.refreshToken));
-        return;
-      }
+      //       final accessTokenExpired = _tokenManager.isTokenExpired(
+      //         session.accessToken,
+      //       );
+      //       print('🔐 [AuthBloc] Access token expired: $accessTokenExpired');
+      // 
+      //       if (accessTokenExpired) {
+      //         print('🔐 [AuthBloc] Attempting to refresh session...');
+      //         // Try to refresh the session
+      //         add(AuthRefreshSessionEvent(refreshToken: session.refreshToken));
+      //         return;
+      //       }
 
       print('🔐 [AuthBloc] Session valid, emitting authenticated state');
       emit(AuthAuthenticatedState(user: session.user, session: session));
