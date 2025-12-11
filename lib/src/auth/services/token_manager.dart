@@ -350,14 +350,14 @@ class TokenManager {
   }
 
   /// Clear all stored data
-      
-      // Clear cached tokens
-      _cachedAccessToken = null;
-      _cachedRefreshToken = null;
   Future<void> clearAll() async {
     try {
       await _secureStorage.deleteAll();
       OrbitNestLogger.debug('All secure storage cleared');
+      
+      // Clear cached tokens
+      _cachedAccessToken = null;
+      _cachedRefreshToken = null;
     } catch (e) {
       OrbitNestLogger.warning('Error clearing storage', e);
       // Ignore errors when clearing all
