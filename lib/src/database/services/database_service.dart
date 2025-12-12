@@ -182,11 +182,28 @@ class DatabaseService {
         queryParameters: queryParams,
       );
 
+      // Backend returns {success, table_name, total_rows, returned_rows, page, limit, columns, data: [...]}
+      // Extract the actual data array from the response
+      final dynamic responseData = response.data;
+      final List<dynamic> dataArray;
+      
+      if (responseData is Map<String, dynamic> && responseData.containsKey('data')) {
+        // Wrapped format from backend
+        dataArray = responseData['data'] as List<dynamic>;
+      } else if (responseData is List) {
+        // Direct array format (fallback)
+        dataArray = responseData;
+      } else {
+        dataArray = [];
+      }
+
       return PostgrestResponse<Map<String, dynamic>>(
-        data: List<Map<String, dynamic>>.from(response.data ?? []),
-        count: response.headers.map['x-total-count']?.first != null
-            ? int.tryParse(response.headers.map['x-total-count']!.first)
-            : null,
+        data: List<Map<String, dynamic>>.from(dataArray),
+        count: responseData is Map<String, dynamic> 
+            ? responseData['total_rows'] as int?
+            : response.headers.map['x-total-count']?.first != null
+                ? int.tryParse(response.headers.map['x-total-count']!.first)
+                : null,
         status: response.statusCode,
       );
     } catch (e) {
