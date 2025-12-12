@@ -22,6 +22,7 @@ class AuthInterceptor extends Interceptor {
       if (_isClientEndpoint(options.path)) {
         debugPrint('🔑 [AuthInterceptor] Client endpoint, using API key: ${options.path}');
         final apiKey = await _tokenManager.getApiKey();
+        debugPrint('🔑 [AuthInterceptor] API key retrieved: ${apiKey != null ? "yes (${apiKey.substring(0, 50)}...)" : "no"}');
         if (apiKey != null) {
           options.headers['Authorization'] = 'Bearer $apiKey';
           options.headers['apikey'] = apiKey;
