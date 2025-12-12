@@ -21,7 +21,13 @@ class AuthInterceptor extends Interceptor {
       // Get the current token
       debugPrint('🔑 [AuthInterceptor] Getting access token for: ${options.path}');
       final token = await _tokenManager.getAccessToken();
-      debugPrint('🔑 [AuthInterceptor] Token retrieved: ${token != null ? "yes (${token.substring(0, 20)}...)" : "no"}');
+      if (token != null) {
+        final previewLength = token.length < 50 ? token.length : 50;
+        debugPrint('🔑 [AuthInterceptor] Token retrieved: yes (${token.substring(0, previewLength)}...)');
+        debugPrint('🔑 [AuthInterceptor] Token length: ${token.length}');
+      } else {
+        debugPrint('🔑 [AuthInterceptor] Token retrieved: no');
+      }
 
       if (token != null) {
         options.headers['Authorization'] = 'Bearer $token';
@@ -49,8 +55,41 @@ class AuthInterceptor extends Interceptor {
 
   @override
   Future<void> onError(DioException err, ErrorInterceptorHandler handler) async {
-    // Handle 401 errors by attempting to refresh the token
+    // Handle 401 errors by attempting to refresh the token or use API key
     if (err.response?.statusCode == 401) {
+      final errorMessage = err.response?.data?.toString() ?? '';
+      
+      // If invalid signature, try using API key instead
+      if (errorMessage.contains('invalid signature')) {
+        debugPrint('🔄 [AuthInterceptor] Invalid signature, retrying with API key...');
+        try {
+          final apiKey = await _tokenManager.getApiKey();
+          if (apiKey != null) {
+            err.requestOptions.headers['apikey'] = apiKey;
+            err.requestOptions.headers['Authorization'] = 'Bearer $apiKey';
+            
+            // Create a new Dio instance to avoid infinite loops
+            final dio = Dio();
+            final response = await dio.request(
+              err.requestOptions.path,
+              options: Options(
+                method: err.requestOptions.method,
+                headers: err.requestOptions.headers,
+              ),
+              data: err.requestOptions.data,
+              queryParameters: err.requestOptions.queryParameters,
+            );
+            
+            debugPrint('✅ [AuthInterceptor] Retry with API key successful');
+            handler.resolve(response);
+            return;
+          }
+        } catch (e) {
+          debugPrint('❌ [AuthInterceptor] Retry with API key failed: $e');
+        }
+      }
+      
+      // Try refreshing the token
       try {
         final refreshed = await _tokenManager.refreshSession();
         if (refreshed) {
