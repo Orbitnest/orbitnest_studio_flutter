@@ -103,9 +103,9 @@ class Endpoints {
   static String projectDatabaseTables(String projectSlug) =>
       '/api/project/$projectSlug/database/tables';
   static String projectDatabaseTablesList(String projectSlug) =>
-      '/api/project/$projectSlug/database/tables';
+      '/api/project/$projectSlug/database/tables/list';
   static String projectDatabaseTableData(String projectSlug, String table) =>
-      '/api/project/$projectSlug/database/tables/$table';
+      '/api/project/$projectSlug/database/tables/$table/data';
   static String projectDatabaseTableRows(String projectSlug, String table) =>
       '/api/project/$projectSlug/database/tables/$table/rows';
   static String projectDatabaseTableRowById(
