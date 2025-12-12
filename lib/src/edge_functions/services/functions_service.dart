@@ -28,7 +28,7 @@ class FunctionsService {
     try {
       final response = await _httpClient.request(
         method,
-        Endpoints.invokeFunction(_projectSlug, functionName),
+        Endpoints.invokeFunction(_projectId, functionName),
         data: body,
         options: Options(headers: headers),
       );
