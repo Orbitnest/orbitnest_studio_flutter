@@ -97,39 +97,39 @@ class Endpoints {
           String projectId, String name) =>
       '/api/projects/$projectId/environment-variables/$name';
 
-  // Database Operations
-  static String projectDatabaseSql(String projectId) =>
-      '/api/projects/$projectId/database/sql';
-  static String projectDatabaseTables(String projectId) =>
-      '/api/projects/$projectId/database/tables';
-  static String projectDatabaseTablesList(String projectId) =>
-      '/api/projects/$projectId/database/tables/list';
-  static String projectDatabaseTableData(String projectId, String table) =>
-      '/api/projects/$projectId/database/tables/$table/data';
-  static String projectDatabaseTableRows(String projectId, String table) =>
-      '/api/projects/$projectId/database/tables/$table/rows';
+  // Database Operations (Client endpoints using project slug)
+  static String projectDatabaseSql(String projectSlug) =>
+      '/api/project/$projectSlug/database/sql';
+  static String projectDatabaseTables(String projectSlug) =>
+      '/api/project/$projectSlug/database/tables';
+  static String projectDatabaseTablesList(String projectSlug) =>
+      '/api/project/$projectSlug/database/tables';
+  static String projectDatabaseTableData(String projectSlug, String table) =>
+      '/api/project/$projectSlug/database/tables/$table';
+  static String projectDatabaseTableRows(String projectSlug, String table) =>
+      '/api/project/$projectSlug/database/tables/$table/rows';
   static String projectDatabaseTableRowById(
-          String projectId, String table, String rowId) =>
-      '/api/projects/$projectId/database/tables/$table/rows/$rowId';
+          String projectSlug, String table, String rowId) =>
+      '/api/project/$projectSlug/database/tables/$table/rows/$rowId';
   static String projectDatabaseTableBulkInsert(
-          String projectId, String table) =>
-      '/api/projects/$projectId/database/tables/$table/bulk-insert';
+          String projectSlug, String table) =>
+      '/api/project/$projectSlug/database/tables/$table/rows/bulk';
   static String projectDatabaseTableBulkUpdate(
-          String projectId, String table) =>
-      '/api/projects/$projectId/database/tables/$table/bulk-update';
+          String projectSlug, String table) =>
+      '/api/project/$projectSlug/database/tables/$table/rows/bulk';
   static String projectDatabaseTableBulkDelete(
-          String projectId, String table) =>
-      '/api/projects/$projectId/database/tables/$table/bulk-delete';
-  static String projectDatabaseTableEnableRls(String projectId, String table) =>
-      '/api/projects/$projectId/database/tables/$table/rls/enable';
+          String projectSlug, String table) =>
+      '/api/project/$projectSlug/database/tables/$table/rows/bulk';
+  static String projectDatabaseTableEnableRls(String projectSlug, String table) =>
+      '/api/project/$projectSlug/database/tables/$table/rls/enable';
   static String projectDatabaseTableDisableRls(
-          String projectId, String table) =>
-      '/api/projects/$projectId/database/tables/$table/rls/disable';
-  static String projectDatabaseTablePolicies(String projectId, String table) =>
-      '/api/projects/$projectId/database/tables/$table/policies';
+          String projectSlug, String table) =>
+      '/api/project/$projectSlug/database/tables/$table/rls/disable';
+  static String projectDatabaseTablePolicies(String projectSlug, String table) =>
+      '/api/project/$projectSlug/database/tables/$table/policies';
   static String projectDatabaseTablePolicyByName(
-          String projectId, String table, String name) =>
-      '/api/projects/$projectId/database/tables/$table/policies/$name';
+          String projectSlug, String table, String name) =>
+      '/api/project/$projectSlug/database/tables/$table/policies/$name';
 
   // Logging
   static String projectLogs(String projectId) =>
