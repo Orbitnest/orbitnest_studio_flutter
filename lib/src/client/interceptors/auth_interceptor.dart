@@ -62,8 +62,13 @@ class AuthInterceptor extends Interceptor {
             err.requestOptions.headers['Authorization'] = 'Bearer $apiKey';
             err.requestOptions.headers['apikey'] = apiKey;
             
-            // Create a new Dio instance to avoid infinite loops
-            final dio = Dio();
+            // Create a new Dio instance with the same base URL to avoid infinite loops
+            final dio = Dio(BaseOptions(
+              baseUrl: err.requestOptions.baseUrl,
+              connectTimeout: err.requestOptions.connectTimeout,
+              receiveTimeout: err.requestOptions.receiveTimeout,
+            ));
+            
             final response = await dio.request(
               err.requestOptions.path,
               options: Options(
@@ -92,8 +97,13 @@ class AuthInterceptor extends Interceptor {
           if (token != null) {
             err.requestOptions.headers['Authorization'] = 'Bearer $token';
             
-            // Create a new Dio instance to avoid infinite loops
-            final dio = Dio();
+            // Create a new Dio instance with the same base URL to avoid infinite loops
+            final dio = Dio(BaseOptions(
+              baseUrl: err.requestOptions.baseUrl,
+              connectTimeout: err.requestOptions.connectTimeout,
+              receiveTimeout: err.requestOptions.receiveTimeout,
+            ));
+            
             final response = await dio.request(
               err.requestOptions.path,
               options: Options(
