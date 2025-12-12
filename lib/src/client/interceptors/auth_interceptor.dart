@@ -18,7 +18,22 @@ class AuthInterceptor extends Interceptor {
         return;
       }
 
-      // Get the current token
+      // Check if this is a client/database endpoint that needs API key
+      if (_isClientEndpoint(options.path)) {
+        debugPrint('🔑 [AuthInterceptor] Client endpoint, using API key: ${options.path}');
+        final apiKey = await _tokenManager.getApiKey();
+        if (apiKey != null) {
+          options.headers['Authorization'] = 'Bearer $apiKey';
+          options.headers['apikey'] = apiKey;
+          debugPrint('✅ [AuthInterceptor] Added API key header');
+        } else {
+          debugPrint('⚠️ [AuthInterceptor] No API key available');
+        }
+        handler.next(options);
+        return;
+      }
+
+      // For other endpoints, use the user's access token
       debugPrint('🔑 [AuthInterceptor] Getting access token for: ${options.path}');
       final token = await _tokenManager.getAccessToken();
       debugPrint('🔑 [AuthInterceptor] Token retrieved: ${token != null ? "yes (${token.substring(0, 20)}...)" : "no"}');
@@ -146,5 +161,16 @@ class AuthInterceptor extends Interceptor {
     final isFunction = path.contains('/functions/');
     
     return isAuth && !isDatabase && !isFunction;
+  }
+
+  /// Check if this is a client endpoint that requires API key authentication
+  /// These are endpoints like /api/project/:slug/database/* or /api/project/:slug/functions/*
+  bool _isClientEndpoint(String path) {
+    // Client endpoints pattern: /api/project/:slug/database/* or /api/project/:slug/functions/*
+    final isClientPath = path.contains('/api/project/');
+    final isDatabase = path.contains('/database/');
+    final isFunction = path.contains('/functions/');
+    
+    return isClientPath && (isDatabase || isFunction);
   }
 }
