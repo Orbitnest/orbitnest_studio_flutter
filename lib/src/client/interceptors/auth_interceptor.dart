@@ -58,9 +58,11 @@ class AuthInterceptor extends Interceptor {
         debugPrint('⚠️ [AuthInterceptor] JWT has invalid signature, falling back to API key');
         try {
           final apiKey = await _tokenManager.getApiKey();
+          debugPrint('🔑 [AuthInterceptor] Retrieved API key: ${apiKey != null ? "yes (${apiKey.substring(0, 20)}...)" : "no"}');
           if (apiKey != null) {
             err.requestOptions.headers['Authorization'] = 'Bearer $apiKey';
             err.requestOptions.headers['apikey'] = apiKey;
+            debugPrint('🔑 [AuthInterceptor] Updated headers with API key');
             
             // Create a new Dio instance with the same base URL to avoid infinite loops
             final dio = Dio(BaseOptions(
