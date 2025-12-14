@@ -17,6 +17,7 @@ class FunctionsRepository {
     String method = 'POST',
     dynamic body,
     Map<String, String>? headers,
+    Map<String, dynamic>? queryParameters,
   }) async {
     try {
       return await _functionsService.invoke(
@@ -24,6 +25,7 @@ class FunctionsRepository {
         method: method,
         body: body,
         headers: headers,
+        queryParameters: queryParameters,
       );
     } catch (e) {
       throw FunctionException.fromException(e);

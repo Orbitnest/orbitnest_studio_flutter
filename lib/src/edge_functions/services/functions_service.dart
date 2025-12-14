@@ -24,12 +24,14 @@ class FunctionsService {
     String method = 'POST',
     dynamic body,
     Map<String, String>? headers,
+    Map<String, dynamic>? queryParameters,
   }) async {
     try {
       final response = await _httpClient.request(
         method,
-        Endpoints.invokeFunction(_projectId, functionName),
+        Endpoints.invokeFunction(_projectSlug, functionName),
         data: body,
+        queryParameters: queryParameters,
         options: Options(headers: headers),
       );
 

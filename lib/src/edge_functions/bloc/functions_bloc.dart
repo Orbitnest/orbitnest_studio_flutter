@@ -30,6 +30,7 @@ class FunctionsBloc extends Bloc<FunctionsEvent, FunctionsState> {
         method: event.method,
         body: event.body,
         headers: event.headers,
+        queryParameters: event.queryParameters,
       );
 
       emit(FunctionsInvokedState(

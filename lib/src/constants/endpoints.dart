@@ -85,8 +85,8 @@ class Endpoints {
       '/api/projects/$projectId/functions/$name/logs';
 
   // Function Invocation
-  static String invokeFunction(String projectId, String name) =>
-      '/api/projects/$projectId/functions/$name/invoke';
+  static String invokeFunction(String projectSlug, String name) =>
+      '/api/projects/$projectSlug/functions/v1/$name';
 
   // Environment Variables
   static String projectEnvironmentVariables(String projectId) =>
