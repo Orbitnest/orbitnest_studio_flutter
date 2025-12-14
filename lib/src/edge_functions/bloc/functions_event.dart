@@ -10,10 +10,12 @@ class FunctionsInvokeEvent extends FunctionsEvent {
     this.method = 'POST',
     this.body,
     this.headers,
+    this.queryParameters,
   });
 
   final String functionName;
   final String method;
   final dynamic body;
   final Map<String, String>? headers;
+  final Map<String, dynamic>? queryParameters;
 }

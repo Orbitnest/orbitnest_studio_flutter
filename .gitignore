@@ -40,3 +40,12 @@ build/
 # Generated files
 *.freezed.dart
 *.g.dart
+# AI Assistant files and directories
+.claude/
+.copilot/
+.cursor/
+.aider/
+.cursorrules
+.clinerules
+*.ai.md
+.ai/

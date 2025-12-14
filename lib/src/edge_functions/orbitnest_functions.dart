@@ -102,6 +102,7 @@ class OrbitNestFunctions extends ChangeNotifier {
     String method = 'POST',
     dynamic body,
     Map<String, String>? headers,
+    Map<String, dynamic>? queryParameters,
   }) async {
     return await _executeWithCompleter<FunctionResponse>(
       FunctionsInvokeEvent(
@@ -109,6 +110,7 @@ class OrbitNestFunctions extends ChangeNotifier {
         method: method,
         body: body,
         headers: headers,
+        queryParameters: queryParameters,
       ),
     );
   }
@@ -131,11 +133,13 @@ class OrbitNestFunctions extends ChangeNotifier {
   Future<FunctionResponse> get(
     String functionName, {
     Map<String, String>? headers,
+    Map<String, dynamic>? queryParameters,
   }) async {
     return invoke(
       functionName,
       method: 'GET',
       headers: headers,
+      queryParameters: queryParameters,
     );
   }
 
