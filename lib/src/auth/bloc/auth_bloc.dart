@@ -33,8 +33,34 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthInitializeEvent>(_onInitialize);
     on<AuthClearErrorEvent>(_onClearError);
 
+    // Register refresh callback with token manager
+    _tokenManager.setRefreshCallback(_performTokenRefresh);
+
     // Initialize authentication state
     add(const AuthInitializeEvent());
+  }
+
+  /// Perform token refresh for token manager callback
+  Future<bool> _performTokenRefresh() async {
+    try {
+      final refreshToken = await _tokenManager.getRefreshToken();
+      if (refreshToken == null) {
+        return false;
+      }
+
+      final response = await _authRepository.refreshSession(
+        refreshToken: refreshToken,
+      );
+
+      if (response.isAuthenticated && response.session != null) {
+        await _tokenManager.storeSession(response.session!);
+        return true;
+      }
+
+      return false;
+    } catch (e) {
+      return false;
+    }
   }
 
   Future<void> _onSignUpWithEmail(
@@ -419,23 +445,29 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       print('🔐 [AuthBloc] Session expires at: ${session.expiresAt}');
       print('🔐 [AuthBloc] Session isExpired: ${session.isExpired}');
 
-      //       // Check if access token is expired
-      // NOTE: Skip access token expiration check on initialization
-      // Let the server validate the token - if it's expired, API will return 401
-      // This prevents false logouts when token might still be valid server-side
-      // TODO: Implement proper token refresh when backend endpoint is ready
+      // Check if token needs refresh (expired or expiring within 5 minutes)
+      final accessTokenExpired = _tokenManager.isTokenExpired(
+        session.accessToken,
+      );
+      final accessTokenExpiringSoon = _tokenManager.needsRefresh(
+        session.accessToken,
+      );
 
-      //       final accessTokenExpired = _tokenManager.isTokenExpired(
-      //         session.accessToken,
-      //       );
-      //       print('🔐 [AuthBloc] Access token expired: $accessTokenExpired');
-      // 
-      //       if (accessTokenExpired) {
-      //         print('🔐 [AuthBloc] Attempting to refresh session...');
-      //         // Try to refresh the session
-      //         add(AuthRefreshSessionEvent(refreshToken: session.refreshToken));
-      //         return;
-      //       }
+      print('🔐 [AuthBloc] Access token expired: $accessTokenExpired, expiring soon: $accessTokenExpiringSoon');
+
+      if (accessTokenExpired || accessTokenExpiringSoon) {
+        print('🔐 [AuthBloc] Token needs refresh, attempting to refresh session...');
+        // Try to refresh the session asynchronously
+        add(AuthRefreshSessionEvent(refreshToken: session.refreshToken));
+
+        // Still emit authenticated state with current session while refresh is in progress
+        // The refresh will update the session when complete
+        if (!accessTokenExpired) {
+          print('🔐 [AuthBloc] Emitting authenticated state while refresh in progress');
+          emit(AuthAuthenticatedState(user: session.user, session: session));
+        }
+        return;
+      }
 
       print('🔐 [AuthBloc] Session valid, emitting authenticated state');
       emit(AuthAuthenticatedState(user: session.user, session: session));
