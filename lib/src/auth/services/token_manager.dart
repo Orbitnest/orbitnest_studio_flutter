@@ -294,11 +294,27 @@ class TokenManager {
         session.isExpiringWithin(const Duration(minutes: 5));
   }
 
-  /// Refresh session (this would be called by the auth service)
+  /// Refresh session callback - should be set by AuthBloc
+  Future<bool> Function()? _refreshCallback;
+
+  /// Set the refresh callback (called by AuthBloc during initialization)
+  void setRefreshCallback(Future<bool> Function() callback) {
+    _refreshCallback = callback;
+  }
+
+  /// Refresh session using the registered callback
   Future<bool> refreshSession() async {
-    // This method would be implemented by the AuthService
-    // returning true/false based on success
-    return false;
+    if (_refreshCallback == null) {
+      OrbitNestLogger.warning('Refresh callback not set, cannot refresh session');
+      return false;
+    }
+
+    try {
+      return await _refreshCallback!();
+    } catch (e) {
+      OrbitNestLogger.error('Token refresh failed', e);
+      return false;
+    }
   }
 
   /// Store project information

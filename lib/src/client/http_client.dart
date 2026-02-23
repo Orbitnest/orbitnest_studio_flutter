@@ -4,6 +4,8 @@ import '../utils/env_config.dart';
 import 'interceptors/auth_interceptor.dart';
 import 'interceptors/error_interceptor.dart';
 import 'interceptors/logging_interceptor.dart';
+import 'interceptors/retry_interceptor.dart';
+import '../utils/retry_policy.dart';
 
 /// HTTP client for OrbitNest Studio API calls
 class OrbitNestHttpClient {
@@ -46,6 +48,7 @@ class OrbitNestHttpClient {
   void _setupInterceptors() {
     _dio.interceptors.addAll([
       AuthInterceptor(_tokenManager),
+      RetryInterceptor(retryPolicy: RetryPolicy.standard),
       ErrorInterceptor(),
       LoggingInterceptor(),
     ]);

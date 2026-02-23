@@ -249,7 +249,7 @@ class PostgrestQueryBuilder<T> {
       );
     } else {
       throw UnsupportedError(
-          'Query execution via BLoC not yet implemented. Use OrbitNestDatabase methods instead.');
+          'Query builder requires DatabaseService for execution. Use OrbitNestClient.from(table) instead of creating query builder directly.');
     }
   }
 
@@ -284,7 +284,7 @@ class PostgrestQueryBuilder<T> {
       );
     } else {
       throw UnsupportedError(
-          'Insert via BLoC not yet implemented. Use OrbitNestDatabase methods instead.');
+          'Query builder requires DatabaseService. Use OrbitNestClient.from(table) instead.');
     }
   }
 
@@ -300,7 +300,7 @@ class PostgrestQueryBuilder<T> {
       );
     } else {
       throw UnsupportedError(
-          'Update via BLoC not yet implemented. Use OrbitNestDatabase methods instead.');
+          'Query builder requires DatabaseService. Use OrbitNestClient.from(table) instead.');
     }
   }
 
@@ -327,7 +327,7 @@ class PostgrestQueryBuilder<T> {
       );
     } else {
       throw UnsupportedError(
-          'Delete via BLoC not yet implemented. Use OrbitNestDatabase methods instead.');
+          'Query builder requires DatabaseService. Use OrbitNestClient.from(table) instead.');
     }
   }
 }
