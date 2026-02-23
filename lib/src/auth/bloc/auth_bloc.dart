@@ -3,6 +3,7 @@ import 'package:flutter_bloc/flutter_bloc.dart';
 import '../repositories/auth_repository.dart';
 import '../services/token_manager.dart';
 import '../exceptions/auth_exception.dart';
+import '../../utils/logger.dart';
 import 'auth_event.dart';
 import 'auth_state.dart';
 
@@ -287,12 +288,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
           event.refreshToken ?? await _tokenManager.getRefreshToken();
 
       if (refreshToken == null) {
-        print('🔐 [AuthBloc] No refresh token available');
+        OrbitNestLogger.debug('🔐 [AuthBloc] No refresh token available');
         emit(const AuthUnauthenticatedState());
         return;
       }
 
-      print('🔐 [AuthBloc] Refreshing session with token...');
+      OrbitNestLogger.debug('🔐 [AuthBloc] Refreshing session with token...');
       final response = await _authRepository.refreshSession(
         refreshToken: refreshToken,
       );
@@ -317,7 +318,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         emit(const AuthUnauthenticatedState());
       }
     } catch (e) {
-      print('🔐 [AuthBloc] Refresh session error: $e');
+      OrbitNestLogger.debug('🔐 [AuthBloc] Refresh session error: $e');
       await _tokenManager.clearSession();
       emit(const AuthUnauthenticatedState());
     }
@@ -434,7 +435,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       final session = await _tokenManager.getStoredSession();
 
       if (session == null) {
-        print('🔐 [AuthBloc] No stored session found');
+        OrbitNestLogger.debug('🔐 [AuthBloc] No stored session found');
         emit(const AuthUnauthenticatedState());
         return;
       }
@@ -442,8 +443,8 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       print(
         '🔐 [AuthBloc] Found stored session for user: ${session.user.email}',
       );
-      print('🔐 [AuthBloc] Session expires at: ${session.expiresAt}');
-      print('🔐 [AuthBloc] Session isExpired: ${session.isExpired}');
+      OrbitNestLogger.debug('🔐 [AuthBloc] Session expires at: ${session.expiresAt}');
+      OrbitNestLogger.debug('🔐 [AuthBloc] Session isExpired: ${session.isExpired}');
 
       // Check if token needs refresh (expired or expiring within 5 minutes)
       final accessTokenExpired = _tokenManager.isTokenExpired(
@@ -453,26 +454,26 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         session.accessToken,
       );
 
-      print('🔐 [AuthBloc] Access token expired: $accessTokenExpired, expiring soon: $accessTokenExpiringSoon');
+      OrbitNestLogger.debug('🔐 [AuthBloc] Access token expired: $accessTokenExpired, expiring soon: $accessTokenExpiringSoon');
 
       if (accessTokenExpired || accessTokenExpiringSoon) {
-        print('🔐 [AuthBloc] Token needs refresh, attempting to refresh session...');
+        OrbitNestLogger.debug('🔐 [AuthBloc] Token needs refresh, attempting to refresh session...');
         // Try to refresh the session asynchronously
         add(AuthRefreshSessionEvent(refreshToken: session.refreshToken));
 
         // Still emit authenticated state with current session while refresh is in progress
         // The refresh will update the session when complete
         if (!accessTokenExpired) {
-          print('🔐 [AuthBloc] Emitting authenticated state while refresh in progress');
+          OrbitNestLogger.debug('🔐 [AuthBloc] Emitting authenticated state while refresh in progress');
           emit(AuthAuthenticatedState(user: session.user, session: session));
         }
         return;
       }
 
-      print('🔐 [AuthBloc] Session valid, emitting authenticated state');
+      OrbitNestLogger.debug('🔐 [AuthBloc] Session valid, emitting authenticated state');
       emit(AuthAuthenticatedState(user: session.user, session: session));
     } catch (e) {
-      print('🔐 [AuthBloc] Error during initialization: $e');
+      OrbitNestLogger.debug('🔐 [AuthBloc] Error during initialization: $e');
       emit(const AuthUnauthenticatedState());
     }
   }
