@@ -1,9 +1,13 @@
+import 'dart:convert';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Environment configuration service
 /// Loads configuration from .env file or environment variables
 class EnvConfig {
   static bool _initialized = false;
+
+  /// The hardcoded OrbitNest API base URL — always the same for all projects
+  static const String kBaseUrl = 'https://api.orbitnest.io';
 
   /// Initialize the environment configuration
   /// Must be called before using any environment variables
@@ -23,21 +27,8 @@ class EnvConfig {
   /// Check if environment is initialized
   static bool get isInitialized => _initialized;
 
-  /// Get OrbitNest Studio base URL
-  static String get baseUrl {
-    _ensureInitialized();
-    return dotenv.env['ORBITNEST_BASE_URL'] ?? 'http://localhost:3001';
-  }
-
-  /// Get project slug
-  static String get projectSlug {
-    _ensureInitialized();
-    final slug = dotenv.env['ORBITNEST_PROJECT_SLUG'];
-    if (slug == null || slug.isEmpty) {
-      throw Exception('ORBITNEST_PROJECT_SLUG is required in .env file');
-    }
-    return slug;
-  }
+  /// Get OrbitNest Studio base URL — hardcoded, never changes
+  static String get baseUrl => kBaseUrl;
 
   /// Get anonymous key
   static String get anonKey {
@@ -55,10 +46,12 @@ class EnvConfig {
     return dotenv.env['ORBITNEST_SERVICE_ROLE_KEY'];
   }
 
-  /// Get project ID (defaults to project slug if not specified)
-  static String get projectId {
-    _ensureInitialized();
-    return dotenv.env['ORBITNEST_PROJECT_ID'] ?? projectSlug;
+  /// Decode and return the project slug embedded in the anon key JWT payload.
+  ///
+  /// The JWT anon key always contains `project_slug` in its payload, so we
+  /// never need it as a separate env var.
+  static String get projectSlug {
+    return decodeProjectSlugFromJwt(anonKey);
   }
 
   /// Check if debug mode is enabled
@@ -73,6 +66,45 @@ class EnvConfig {
     _ensureInitialized();
     final timeout = dotenv.env['ORBITNEST_API_TIMEOUT'];
     return int.tryParse(timeout ?? '180000') ?? 180000; // 3 minutes default
+  }
+
+  /// Decode the `project_slug` field from a JWT token payload.
+  ///
+  /// JWTs are structured as `header.payload.signature` where each section is
+  /// base64url-encoded. We only need the payload — no secret required.
+  static String decodeProjectSlugFromJwt(String token) {
+    try {
+      final parts = token.split('.');
+      if (parts.length != 3) {
+        throw Exception('Invalid JWT format');
+      }
+
+      // Base64url decode the payload section
+      String payload = parts[1];
+      // Normalise base64url → base64 by adding padding
+      switch (payload.length % 4) {
+        case 2:
+          payload += '==';
+          break;
+        case 3:
+          payload += '=';
+          break;
+      }
+      payload = payload.replaceAll('-', '+').replaceAll('_', '/');
+
+      final decoded = utf8.decode(base64.decode(payload));
+      final json = jsonDecode(decoded) as Map<String, dynamic>;
+
+      final slug = json['project_slug'] as String?;
+      if (slug == null || slug.isEmpty) {
+        throw Exception(
+          'project_slug not found in ORBITNEST_ANON_KEY JWT payload',
+        );
+      }
+      return slug;
+    } catch (e) {
+      throw Exception('Failed to decode project slug from ORBITNEST_ANON_KEY: $e');
+    }
   }
 
   static void _ensureInitialized() {
