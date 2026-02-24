@@ -1,20 +1,38 @@
 import 'package:flutter_test/flutter_test.dart';
 import 'package:orbitnest_studio_flutter/orbitnest_studio_flutter.dart';
 
+// Minimal JWT with payload {"role":"anon","project_slug":"test-project"}
+const _testAnonKey =
+    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9'
+    '.eyJyb2xlIjoiYW5vbiIsInByb2plY3Rfc2x1ZyI6InRlc3QtcHJvamVjdCJ9'
+    '.fake-signature';
+
 void main() {
+  setUpAll(() async {
+    // Initialize without a .env file — still marks as initialized
+    await EnvConfig.initialize();
+  });
+
   group('OrbitNestClient', () {
-    test('can be created with required parameters', () {
-      final client = OrbitNestClient.create(
-        projectUrl: 'http://localhost:3001',
-        projectSlug: 'test-project',
-        anonKey: 'test-anon-key',
-      );
+    test('decodes project slug from JWT and uses hardcoded base URL', () {
+      final client = OrbitNestClient.create(anonKey: _testAnonKey);
 
       expect(client.projectSlug, 'test-project');
-      expect(client.baseUrl, 'http://localhost:3001');
-      expect(client.anonKey, 'test-anon-key');
-      
+      expect(client.baseUrl, EnvConfig.kBaseUrl);
+      expect(client.anonKey, _testAnonKey);
+
       client.dispose();
+    });
+  });
+
+  group('EnvConfig', () {
+    test('decodes project_slug from JWT payload', () {
+      final slug = EnvConfig.decodeProjectSlugFromJwt(_testAnonKey);
+      expect(slug, 'test-project');
+    });
+
+    test('baseUrl returns hardcoded production URL', () {
+      expect(EnvConfig.baseUrl, 'https://api.orbitnest.io');
     });
   });
 }
