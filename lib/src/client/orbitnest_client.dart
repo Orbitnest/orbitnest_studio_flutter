@@ -59,10 +59,13 @@ class OrbitNestClient {
     _initialize();
   }
 
-  /// Create a new OrbitNest client using environment configuration
+  /// Create a new OrbitNest client using environment configuration.
+  ///
+  /// Only [anonKey] is required (read from `ORBITNEST_ANON_KEY` in `.env`).
+  /// The base URL is hardcoded to `https://api.orbitnest.io` and the project
+  /// slug is automatically decoded from the anon key JWT payload — no other
+  /// env vars are needed.
   factory OrbitNestClient.create({
-    String? projectUrl,
-    String? projectSlug,
     String? anonKey,
     String? serviceRoleKey,
   }) {
@@ -72,11 +75,14 @@ class OrbitNestClient {
       );
     }
 
+    final resolvedAnonKey = anonKey ?? EnvConfig.anonKey;
+    final resolvedSlug = EnvConfig.decodeProjectSlugFromJwt(resolvedAnonKey);
+
     return OrbitNestClient._(
-      baseUrl: projectUrl ?? EnvConfig.baseUrl,
-      projectSlug: projectSlug ?? EnvConfig.projectSlug,
-      projectId: EnvConfig.projectId,
-      anonKey: anonKey ?? EnvConfig.anonKey,
+      baseUrl: EnvConfig.kBaseUrl,
+      projectSlug: resolvedSlug,
+      projectId: resolvedSlug,
+      anonKey: resolvedAnonKey,
       serviceRoleKey: serviceRoleKey ?? EnvConfig.serviceRoleKey,
     );
   }
