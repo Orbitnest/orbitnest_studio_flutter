@@ -8,13 +8,13 @@ import '../exceptions/auth_exception.dart';
 /// Service for handling authentication API calls
 class AuthService {
   final OrbitNestHttpClient _httpClient;
-  final String _projectId;
+  final String _projectSlug;
 
   AuthService({
     required OrbitNestHttpClient httpClient,
-    required String projectId,
+    required String projectSlug,
   })  : _httpClient = httpClient,
-        _projectId = projectId;
+        _projectSlug = projectSlug;
 
   /// Sign up with email (OTP-based)
   Future<AuthResponse> signUpWithEmail({
@@ -23,7 +23,7 @@ class AuthService {
   }) async {
     try {
       final response = await _httpClient.post(
-        Endpoints.projectSignupWithEmail(_projectId),
+        Endpoints.projectSignupWithEmail(_projectSlug),
         data: {
           'email': email,
           if (data != null) 'data': data,
@@ -44,7 +44,7 @@ class AuthService {
   }) async {
     try {
       final response = await _httpClient.post(
-        Endpoints.projectVerifySignup(_projectId),
+        Endpoints.projectVerifySignup(_projectSlug),
         data: {
           'email': email,
           'code': token,
@@ -75,7 +75,7 @@ class AuthService {
   }) async {
     try {
       final response = await _httpClient.post(
-        Endpoints.projectSigninWithEmail(_projectId),
+        Endpoints.projectSigninWithEmail(_projectSlug),
         data: {
           'email': email,
         },
@@ -94,7 +94,7 @@ class AuthService {
   }) async {
     try {
       final response = await _httpClient.post(
-        Endpoints.projectVerifySignin(_projectId),
+        Endpoints.projectVerifySignin(_projectSlug),
         data: {
           'email': email,
           'code': token,
@@ -126,7 +126,7 @@ class AuthService {
   }) async {
     try {
       final response = await _httpClient.post(
-        Endpoints.projectSignup(_projectId),
+        Endpoints.projectSignup(_projectSlug),
         data: {
           'email': email,
           'password': password,
@@ -147,7 +147,7 @@ class AuthService {
   }) async {
     try {
       final response = await _httpClient.post(
-        Endpoints.projectSignin(_projectId),
+        Endpoints.projectSignin(_projectSlug),
         data: {
           'email': email,
           'password': password,
@@ -163,7 +163,7 @@ class AuthService {
   /// Sign out the current user
   Future<void> signOut() async {
     try {
-      await _httpClient.post(Endpoints.projectSignout(_projectId));
+      await _httpClient.post(Endpoints.projectSignout(_projectSlug));
     } catch (e) {
       throw AuthException.fromException(e);
     }
@@ -175,7 +175,7 @@ class AuthService {
   }) async {
     try {
       final response = await _httpClient.post(
-        Endpoints.projectRefresh(_projectId),
+        Endpoints.projectRefresh(_projectSlug),
         data: {
           'refresh_token': refreshToken,
         },
@@ -191,7 +191,7 @@ class AuthService {
   Future<User> getUser() async {
     try {
       final response = await _httpClient.get(
-        Endpoints.projectUser(_projectId),
+        Endpoints.projectUser(_projectSlug),
       );
 
       return User.fromJson(response.data);
@@ -208,7 +208,7 @@ class AuthService {
   }) async {
     try {
       final response = await _httpClient.put(
-        Endpoints.projectUser(_projectId),
+        Endpoints.projectUser(_projectSlug),
         data: {
           if (email != null) 'email': email,
           if (password != null) 'password': password,
@@ -228,7 +228,7 @@ class AuthService {
   }) async {
     try {
       final response = await _httpClient.post(
-        Endpoints.projectRecover(_projectId),
+        Endpoints.projectRecover(_projectSlug),
         data: {
           'email': email,
         },
@@ -248,7 +248,7 @@ class AuthService {
   }) async {
     try {
       final response = await _httpClient.post(
-        Endpoints.projectResetPassword(_projectId),
+        Endpoints.projectResetPassword(_projectSlug),
         data: {
           'email': email,
           'code': token,

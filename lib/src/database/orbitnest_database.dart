@@ -11,14 +11,14 @@ import 'exceptions/database_exception.dart';
 /// Provides direct async methods and Supabase-compatible query builder for CRUD operations only
 class OrbitNestDatabase extends ChangeNotifier {
   final DatabaseBloc _databaseBloc;
-  final String _projectId;
+  final String _projectSlug;
   late final StreamSubscription _stateSubscription;
 
   DatabaseState _currentState = const DatabaseInitialState();
   final Map<String, Completer<dynamic>> _pendingOperations = {};
   int _operationCounter = 0;
 
-  OrbitNestDatabase(this._databaseBloc, this._projectId) {
+  OrbitNestDatabase(this._databaseBloc, this._projectSlug) {
     _stateSubscription = _databaseBloc.stream.listen(_handleStateChange);
     _currentState = _databaseBloc.state;
   }
@@ -133,7 +133,7 @@ class OrbitNestDatabase extends ChangeNotifier {
     return PostgrestQueryBuilder<Map<String, dynamic>>.withBloc(
       databaseBloc: _databaseBloc,
       table: table,
-      projectId: _projectId,
+      projectSlug: _projectSlug,
     );
   }
 

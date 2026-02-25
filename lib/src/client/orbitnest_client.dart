@@ -19,7 +19,6 @@ import 'http_client.dart';
 class OrbitNestClient {
   late final String _baseUrl;
   late final String _projectSlug;
-  late final String _projectId;
   late final String _anonKey;
   late final String? _serviceRoleKey;
   late final OrbitNestHttpClient _httpClient;
@@ -48,12 +47,10 @@ class OrbitNestClient {
   OrbitNestClient._({
     required String baseUrl,
     required String projectSlug,
-    required String projectId,
     required String anonKey,
     String? serviceRoleKey,
   })  : _baseUrl = baseUrl,
         _projectSlug = projectSlug,
-        _projectId = projectId,
         _anonKey = anonKey,
         _serviceRoleKey = serviceRoleKey {
     _initialize();
@@ -81,7 +78,6 @@ class OrbitNestClient {
     return OrbitNestClient._(
       baseUrl: EnvConfig.kBaseUrl,
       projectSlug: resolvedSlug,
-      projectId: resolvedSlug,
       anonKey: resolvedAnonKey,
       serviceRoleKey: serviceRoleKey ?? EnvConfig.serviceRoleKey,
     );
@@ -90,7 +86,7 @@ class OrbitNestClient {
   void _initialize() {
     // Initialize token manager
     _tokenManager = TokenManager(
-      projectId: _projectId,
+      projectSlug: _projectSlug,
       apiKey: _anonKey,
     );
 
@@ -103,18 +99,17 @@ class OrbitNestClient {
     // Initialize services
     _authService = AuthService(
       httpClient: _httpClient,
-      projectId: _projectId,
+      projectSlug: _projectSlug,
     );
 
     _databaseService = DatabaseService(
       httpClient: _httpClient,
-      projectId: _projectId,
+      projectSlug: _projectSlug,
     );
 
     _functionsService = FunctionsService(
       httpClient: _httpClient,
       projectSlug: _projectSlug,
-      projectId: _projectId,
     );
 
     // Initialize repositories
@@ -134,7 +129,7 @@ class OrbitNestClient {
 
     // Initialize simplified API wrappers
     _auth = OrbitNestAuth(_authBloc);
-    _database = OrbitNestDatabase(_databaseBloc, _projectId);
+    _database = OrbitNestDatabase(_databaseBloc, _projectSlug);
     _functions = OrbitNestFunctions(_functionsBloc);
   }
 
@@ -278,9 +273,6 @@ class OrbitNestClient {
 
   /// Get the project slug
   String get projectSlug => _projectSlug;
-
-  /// Get the project ID
-  String get projectId => _projectId;
 
   /// Get the base URL
   String get baseUrl => _baseUrl;
