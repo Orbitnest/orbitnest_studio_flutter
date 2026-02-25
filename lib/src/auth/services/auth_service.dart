@@ -26,7 +26,7 @@ class AuthService {
         Endpoints.projectSignupWithEmail(_projectSlug),
         data: {
           'email': email,
-          if (data != null) 'data': data,
+          if (data != null) 'user_metadata': data,
         },
       );
 
@@ -130,7 +130,7 @@ class AuthService {
         data: {
           'email': email,
           'password': password,
-          if (data != null) 'data': data,
+          if (data != null) 'user_metadata': data,
         },
       );
 
