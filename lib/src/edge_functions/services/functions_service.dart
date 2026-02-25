@@ -8,15 +8,12 @@ import 'package:dio/dio.dart';
 class FunctionsService {
   final OrbitNestHttpClient _httpClient;
   final String _projectSlug;
-  final String _projectId;
 
   FunctionsService({
     required OrbitNestHttpClient httpClient,
     required String projectSlug,
-    required String projectId,
   }) : _httpClient = httpClient,
-       _projectSlug = projectSlug,
-       _projectId = projectId;
+       _projectSlug = projectSlug;
 
   /// Invoke an edge function
   Future<FunctionResponse> invoke(
@@ -58,7 +55,7 @@ class FunctionsService {
   }) async {
     try {
       final response = await _httpClient.post(
-        Endpoints.projectFunctions(_projectId),
+        Endpoints.projectFunctions(_projectSlug),
         data: {
           'name': name,
           if (description != null) 'description': description,
@@ -78,7 +75,7 @@ class FunctionsService {
   Future<List<EdgeFunction>> list() async {
     try {
       final response = await _httpClient.get(
-        Endpoints.projectFunctions(_projectId),
+        Endpoints.projectFunctions(_projectSlug),
       );
 
       final data = response.data as List;
@@ -92,7 +89,7 @@ class FunctionsService {
   Future<EdgeFunction> get(String name) async {
     try {
       final response = await _httpClient.get(
-        Endpoints.projectFunctionByName(_projectId, name),
+        Endpoints.projectFunctionByName(_projectSlug, name),
       );
 
       return EdgeFunction.fromJson(response.data);
@@ -111,7 +108,7 @@ class FunctionsService {
   }) async {
     try {
       final response = await _httpClient.put(
-        Endpoints.projectFunctionByName(_projectId, name),
+        Endpoints.projectFunctionByName(_projectSlug, name),
         data: {
           if (description != null) 'description': description,
           if (sourceCode != null) 'source_code': sourceCode,
@@ -130,7 +127,7 @@ class FunctionsService {
   Future<void> delete(String name) async {
     try {
       await _httpClient.delete(
-        Endpoints.projectFunctionByName(_projectId, name),
+        Endpoints.projectFunctionByName(_projectSlug, name),
       );
     } catch (e) {
       throw FunctionException.fromException(e);
@@ -145,7 +142,7 @@ class FunctionsService {
   }) async {
     try {
       final response = await _httpClient.get(
-        Endpoints.projectFunctionLogs(_projectId, name),
+        Endpoints.projectFunctionLogs(_projectSlug, name),
         queryParameters: {
           if (limit != null) 'limit': limit.toString(),
           if (offset != null) 'offset': offset.toString(),
@@ -163,7 +160,7 @@ class FunctionsService {
   Future<List<EnvironmentVariable>> listEnvironmentVariables() async {
     try {
       final response = await _httpClient.get(
-        Endpoints.projectEnvironmentVariables(_projectId),
+        Endpoints.projectEnvironmentVariables(_projectSlug),
       );
 
       final data = response.data as List;
@@ -182,7 +179,7 @@ class FunctionsService {
   }) async {
     try {
       final response = await _httpClient.post(
-        Endpoints.projectEnvironmentVariables(_projectId),
+        Endpoints.projectEnvironmentVariables(_projectSlug),
         data: {
           'name': name,
           'value': value,
@@ -201,7 +198,7 @@ class FunctionsService {
   Future<void> deleteEnvironmentVariable(String name) async {
     try {
       await _httpClient.delete(
-        Endpoints.projectEnvironmentVariableByName(_projectId, name),
+        Endpoints.projectEnvironmentVariableByName(_projectSlug, name),
       );
     } catch (e) {
       throw FunctionException.fromException(e);
@@ -212,7 +209,7 @@ class FunctionsService {
   Future<int> setBulkEnvironmentVariables(Map<String, String> variables) async {
     try {
       final response = await _httpClient.post(
-        Endpoints.projectEnvironmentVariablesBulk(_projectId),
+        Endpoints.projectEnvironmentVariablesBulk(_projectSlug),
         data: {
           'variables': variables.entries.map((e) => {
             'name': e.key,

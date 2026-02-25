@@ -7,13 +7,13 @@ import '../exceptions/database_exception.dart';
 /// Service for handling database API calls
 class DatabaseService {
   final OrbitNestHttpClient _httpClient;
-  final String _projectId;
+  final String _projectSlug;
 
   DatabaseService({
     required OrbitNestHttpClient httpClient,
-    required String projectId,
+    required String projectSlug,
   }) : _httpClient = httpClient,
-       _projectId = projectId;
+       _projectSlug = projectSlug;
 
   /// Execute raw SQL query
   Future<List<Map<String, dynamic>>> executeSql({
@@ -22,7 +22,7 @@ class DatabaseService {
   }) async {
     try {
       final response = await _httpClient.post(
-        Endpoints.projectDatabaseSql(_projectId),
+        Endpoints.projectDatabaseSql(_projectSlug),
         data: {
           'sql': sql,
           if (parameters != null) 'parameters': parameters,
@@ -44,7 +44,7 @@ class DatabaseService {
   Future<List<TableInfo>> listTables() async {
     try {
       final response = await _httpClient.get(
-        Endpoints.projectDatabaseTablesList(_projectId),
+        Endpoints.projectDatabaseTablesList(_projectSlug),
       );
 
       final data = response.data as List;
@@ -58,7 +58,7 @@ class DatabaseService {
   Future<TableSchema> getTableSchema(String tableName) async {
     try {
       final response = await _httpClient.get(
-        '${Endpoints.projectDatabaseTables(_projectId)}/$tableName/schema',
+        '${Endpoints.projectDatabaseTables(_projectSlug)}/$tableName/schema',
       );
 
       return TableSchema.fromJson(response.data);
@@ -71,7 +71,7 @@ class DatabaseService {
   Future<void> enableRls(String tableName) async {
     try {
       await _httpClient.post(
-        Endpoints.projectDatabaseTableEnableRls(_projectId, tableName),
+        Endpoints.projectDatabaseTableEnableRls(_projectSlug, tableName),
       );
     } catch (e) {
       throw DatabaseException.fromException(e);
@@ -82,7 +82,7 @@ class DatabaseService {
   Future<void> disableRls(String tableName) async {
     try {
       await _httpClient.post(
-        Endpoints.projectDatabaseTableDisableRls(_projectId, tableName),
+        Endpoints.projectDatabaseTableDisableRls(_projectSlug, tableName),
       );
     } catch (e) {
       throw DatabaseException.fromException(e);
@@ -100,7 +100,7 @@ class DatabaseService {
   }) async {
     try {
       await _httpClient.post(
-        Endpoints.projectDatabaseTablePolicies(_projectId, tableName),
+        Endpoints.projectDatabaseTablePolicies(_projectSlug, tableName),
         data: {
           'name': policyName,
           'command': command,
@@ -118,7 +118,7 @@ class DatabaseService {
   Future<List<RlsPolicy>> listPolicies(String tableName) async {
     try {
       final response = await _httpClient.get(
-        Endpoints.projectDatabaseTablePolicies(_projectId, tableName),
+        Endpoints.projectDatabaseTablePolicies(_projectSlug, tableName),
       );
 
       final data = response.data as List;
@@ -135,7 +135,7 @@ class DatabaseService {
   }) async {
     try {
       await _httpClient.delete(
-        Endpoints.projectDatabaseTablePolicyByName(_projectId, tableName, policyName),
+        Endpoints.projectDatabaseTablePolicyByName(_projectSlug, tableName, policyName),
       );
     } catch (e) {
       throw DatabaseException.fromException(e);
@@ -178,7 +178,7 @@ class DatabaseService {
       }
 
       final response = await _httpClient.get(
-        Endpoints.projectDatabaseTableData(_projectId, table),
+        Endpoints.projectDatabaseTableData(_projectSlug, table),
         queryParameters: queryParams,
       );
 
@@ -221,7 +221,7 @@ class DatabaseService {
   }) async {
     try {
       final response = await _httpClient.post(
-        Endpoints.projectDatabaseTableRows(_projectId, table),
+        Endpoints.projectDatabaseTableRows(_projectSlug, table),
         data: values,
         queryParameters: {
           if (upsert) 'upsert': 'true',
@@ -258,7 +258,7 @@ class DatabaseService {
       }
 
       final response = await _httpClient.put(
-        Endpoints.projectDatabaseTableRows(_projectId, table),
+        Endpoints.projectDatabaseTableRows(_projectSlug, table),
         data: values,
         queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
@@ -292,7 +292,7 @@ class DatabaseService {
       }
 
       final response = await _httpClient.delete(
-        Endpoints.projectDatabaseTableRows(_projectId, table),
+        Endpoints.projectDatabaseTableRows(_projectSlug, table),
         queryParameters: queryParams.isNotEmpty ? queryParams : null,
       );
 
@@ -315,7 +315,7 @@ class DatabaseService {
   }) async {
     try {
       final response = await _httpClient.post(
-        Endpoints.projectDatabaseTableBulkInsert(_projectId, table),
+        Endpoints.projectDatabaseTableBulkInsert(_projectSlug, table),
         data: {'rows': values},
         queryParameters: {
           if (upsert) 'upsert': 'true',
@@ -338,7 +338,7 @@ class DatabaseService {
   }) async {
     try {
       final response = await _httpClient.put(
-        Endpoints.projectDatabaseTableBulkUpdate(_projectId, table),
+        Endpoints.projectDatabaseTableBulkUpdate(_projectSlug, table),
         data: {
           'rows': values,
           'match_column': matchColumn,
@@ -359,7 +359,7 @@ class DatabaseService {
   }) async {
     try {
       final response = await _httpClient.delete(
-        Endpoints.projectDatabaseTableBulkDelete(_projectId, table),
+        Endpoints.projectDatabaseTableBulkDelete(_projectSlug, table),
         data: {
           'ids': ids,
           'id_column': idColumn,

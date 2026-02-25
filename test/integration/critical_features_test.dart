@@ -26,7 +26,7 @@ void main() {
       test('should detect tokens needing refresh', () async {
         // This is a unit test for the token manager logic
         final tokenManager = TokenManager(
-          projectId: 'test',
+          projectSlug: 'test',
           apiKey: 'test-key',
         );
 

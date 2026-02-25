@@ -20,7 +20,7 @@ class TokenManager {
     ),
   );
 
-  final String? _projectId;
+  final String? _projectSlug;
   final String? _apiKey;
   static const int _maxTokenAge = 24; // hours
   static const int _refreshThresholdMinutes = 5;
@@ -29,8 +29,8 @@ class TokenManager {
   String? _cachedRefreshToken;
 
 
-  TokenManager({String? projectId, String? apiKey})
-    : _projectId = projectId,
+  TokenManager({String? projectSlug, String? apiKey})
+    : _projectSlug = projectSlug,
       _apiKey = apiKey;
 
   /// Store session securely with additional validation
@@ -317,51 +317,24 @@ class TokenManager {
     }
   }
 
-  /// Store project information
-  Future<void> storeProjectInfo({
-    String? projectId,
-    String? projectSlug,
-  }) async {
+  /// Store project slug
+  Future<void> storeProjectInfo({String? projectSlug}) async {
     try {
-      final futures = <Future<void>>[];
-
-      if (projectId != null) {
-        futures.add(
-          _secureStorage.write(
-            key: OrbitNestConstants.projectIdKey,
-            value: projectId,
-          ),
-        );
-      }
-
       if (projectSlug != null) {
-        futures.add(
-          _secureStorage.write(
-            key: OrbitNestConstants.projectSlugKey,
-            value: projectSlug,
-          ),
+        await _secureStorage.write(
+          key: OrbitNestConstants.projectSlugKey,
+          value: projectSlug,
         );
       }
-
-      await Future.wait(futures);
     } catch (e) {
       throw Exception('Failed to store project info: $e');
     }
   }
 
-  /// Get stored project ID
-  Future<String?> getProjectId() async {
-    if (_projectId != null) return _projectId;
-
-    try {
-      return await _secureStorage.read(key: OrbitNestConstants.projectIdKey);
-    } catch (e) {
-      return null;
-    }
-  }
-
   /// Get stored project slug
   Future<String?> getProjectSlug() async {
+    if (_projectSlug != null) return _projectSlug;
+
     try {
       return await _secureStorage.read(key: OrbitNestConstants.projectSlugKey);
     } catch (e) {

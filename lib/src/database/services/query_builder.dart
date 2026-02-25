@@ -9,7 +9,7 @@ class PostgrestQueryBuilder<T> {
   final DatabaseBloc? _databaseBloc;
   final String _table;
   // ignore: unused_field
-  final String? _projectId;
+  final String? _projectSlug;
   String? _select;
   final List<String> _filters = [];
   final List<String> _orders = [];
@@ -19,16 +19,16 @@ class PostgrestQueryBuilder<T> {
   // Legacy constructor for direct service use
   PostgrestQueryBuilder(this._databaseService, this._table)
       : _databaseBloc = null,
-        _projectId = null;
+        _projectSlug = null;
 
   // New constructor for BLoC-based use
   PostgrestQueryBuilder.withBloc({
     required DatabaseBloc databaseBloc,
     required String table,
-    required String projectId,
+    required String projectSlug,
   })  : _databaseBloc = databaseBloc,
         _table = table,
-        _projectId = projectId,
+        _projectSlug = projectSlug,
         _databaseService = null;
 
   /// Select columns

@@ -9,7 +9,6 @@ class OrbitNestConstants {
   static const String refreshTokenKey = 'orbitnest_refresh_token';
   static const String sessionKey = 'orbitnest_session';
   static const String apiKeyKey = 'orbitnest_api_key';
-  static const String projectIdKey = 'orbitnest_project_id';
   static const String projectSlugKey = 'orbitnest_project_slug';
 
   // Default timeouts (in seconds)
