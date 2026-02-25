@@ -48,7 +48,9 @@ class AuthService {
         data: {
           'email': email,
           'code': token,
-          if (password != null) 'password': password,
+          // NOTE: password is intentionally NOT sent here — the verify-signup
+          // endpoint only accepts {email, code}. Set password separately via
+          // the update-user endpoint after successful verification.
         },
       );
 
