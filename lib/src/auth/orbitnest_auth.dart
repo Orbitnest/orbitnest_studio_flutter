@@ -174,14 +174,14 @@ class OrbitNestAuth extends ChangeNotifier {
   }
 
   /// Traditional signup with email and password
-  /// Returns user and session when successful
+  /// Returns email and message when OTP is sent for verification
   Future<Map<String, dynamic>> signUp({
     required String email,
     required String password,
     Map<String, dynamic>? metadata,
   }) async {
     return await _executeWithCompleter<Map<String, dynamic>>(
-      'auth_success',
+      'otp_sent',
       AuthSignUpEvent(email: email, password: password, data: metadata),
     );
   }

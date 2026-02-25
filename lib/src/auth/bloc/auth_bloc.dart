@@ -214,7 +214,15 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         data: event.data,
       );
 
-      if (response.isAuthenticated) {
+      if (response.isOtpSent) {
+        emit(
+          AuthOtpSentState(
+            email: event.email,
+            message: response.message ?? 'OTP sent to your email',
+            type: 'signup',
+          ),
+        );
+      } else if (response.isAuthenticated) {
         await _tokenManager.storeSession(response.session!);
         emit(
           AuthAuthenticatedState(
