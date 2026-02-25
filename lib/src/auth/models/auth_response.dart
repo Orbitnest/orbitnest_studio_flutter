@@ -47,12 +47,19 @@ class AuthResponse {
         });
       }
 
+      // Treat `success: true` with no user/session as an OTP-sent response.
+      // The server returns this format in debug mode and when email OTP is sent.
+      final bool? otpSent = json['otp_sent'] as bool? ??
+          (json['success'] == true && session == null && json['user'] == null
+              ? true
+              : null);
+
       return AuthResponse(
         user: json['user'] != null
             ? User.fromJson(json['user'] as Map<String, dynamic>)
             : null,
         session: session,
-        otpSent: json['otp_sent'] as bool?,
+        otpSent: otpSent,
         email: json['email'] as String?,
         message: json['message'] as String?,
         emailOtp: json['email_otp'] as String?,
