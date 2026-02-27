@@ -297,23 +297,38 @@ class TokenManager {
   /// Refresh session callback - should be set by AuthBloc
   Future<bool> Function()? _refreshCallback;
 
+  /// In-flight refresh – deduplicate concurrent callers so only one HTTP
+  /// request to /auth/refresh is made at a time.
+  Future<bool>? _pendingRefresh;
+
   /// Set the refresh callback (called by AuthBloc during initialization)
   void setRefreshCallback(Future<bool> Function() callback) {
     _refreshCallback = callback;
   }
 
-  /// Refresh session using the registered callback
+  /// Refresh session using the registered callback.
+  /// If a refresh is already in progress, the caller awaits the same Future
+  /// instead of firing a second HTTP request.
   Future<bool> refreshSession() async {
     if (_refreshCallback == null) {
       OrbitNestLogger.warning('Refresh callback not set, cannot refresh session');
       return false;
     }
 
+    if (_pendingRefresh != null) {
+      OrbitNestLogger.debug('Token refresh already in progress, awaiting existing request');
+      return _pendingRefresh!;
+    }
+
+    _pendingRefresh = _refreshCallback!();
     try {
-      return await _refreshCallback!();
+      final result = await _pendingRefresh!;
+      return result;
     } catch (e) {
       OrbitNestLogger.error('Token refresh failed', e);
       return false;
+    } finally {
+      _pendingRefresh = null;
     }
   }
 
