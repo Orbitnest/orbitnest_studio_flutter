@@ -101,6 +101,7 @@ class OrbitNestAuth extends ChangeNotifier {
   User? get currentUser {
     return switch (_currentState) {
       AuthAuthenticatedState(:final user) => user,
+      AuthUserUpdatedState(:final user) => user,
       _ => null,
     };
   }
