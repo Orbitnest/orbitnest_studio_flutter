@@ -345,6 +345,23 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         data: event.data,
       );
 
+      // Persist updated user into stored session so it survives app restarts.
+      // Without this, _onInitialize would restore the stale user (without
+      // display_name) on next launch.
+      try {
+        final currentSession = await _tokenManager.getStoredSession();
+        if (currentSession != null) {
+          await _tokenManager.storeSession(
+            currentSession.copyWith(user: response.user),
+          );
+        }
+      } catch (sessionError) {
+        // Non-fatal – user is updated in memory even if storage fails
+        OrbitNestLogger.warning(
+          'Failed to persist updated user to stored session: $sessionError',
+        );
+      }
+
       emit(
         AuthUserUpdatedState(user: response.user, message: response.message),
       );

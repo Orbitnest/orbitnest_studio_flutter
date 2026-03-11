@@ -241,9 +241,14 @@ class OrbitNestClient {
   }
 
   /// Sign up with email and password
-  /// Usage: orbitnest.signUp('user@example.com', 'password')
-  Future<Map<String, dynamic>> signUp(String email, String password) async {
-    return await _auth.signUp(email: email, password: password);
+  /// Optionally pass [metadata] (e.g. display_name) to store in user_metadata.
+  /// Usage: orbitnest.signUp('user@example.com', 'password', metadata: {'display_name': 'Alice'})
+  Future<Map<String, dynamic>> signUp(
+    String email,
+    String password, {
+    Map<String, dynamic>? metadata,
+  }) async {
+    return await _auth.signUp(email: email, password: password, metadata: metadata);
   }
 
   /// Sign out the current user
