@@ -1,4 +1,6 @@
 import 'dart:convert';
+import 'dart:io' show Platform;
+import 'package:flutter/foundation.dart';
 import 'package:flutter_dotenv/flutter_dotenv.dart';
 
 /// Environment configuration service
@@ -6,8 +8,12 @@ import 'package:flutter_dotenv/flutter_dotenv.dart';
 class EnvConfig {
   static bool _initialized = false;
 
-  /// The hardcoded OrbitNest API base URL — always the same for all projects
+  /// The default OrbitNest API base URL — used when no override is provided
   static const String kBaseUrl = 'https://api.orbitnest.io';
+
+  /// The Android emulator host alias — replaces localhost/127.0.0.1 so the
+  /// emulator can reach the host machine's loopback interface.
+  static const String kAndroidEmulatorHost = '10.0.2.2';
 
   /// Initialize the environment configuration
   /// Must be called before using any environment variables
@@ -27,8 +33,42 @@ class EnvConfig {
   /// Check if environment is initialized
   static bool get isInitialized => _initialized;
 
-  /// Get OrbitNest Studio base URL — hardcoded, never changes
-  static String get baseUrl => kBaseUrl;
+  /// Resolve a URL so that `localhost` / `127.0.0.1` is replaced with
+  /// `10.0.2.2` when running on an Android emulator in debug mode.
+  ///
+  /// This is a no-op on physical devices, iOS, or release builds.
+  static String resolveUrl(String url) {
+    if (kDebugMode && !kIsWeb) {
+      try {
+        if (Platform.isAndroid) {
+          return url
+              .replaceAll('http://localhost', 'http://$kAndroidEmulatorHost')
+              .replaceAll('https://localhost', 'https://$kAndroidEmulatorHost')
+              .replaceAll('http://127.0.0.1', 'http://$kAndroidEmulatorHost')
+              .replaceAll('https://127.0.0.1', 'https://$kAndroidEmulatorHost');
+        }
+      } catch (_) {
+        // Platform check failed (e.g. web) — return url unchanged
+      }
+    }
+    return url;
+  }
+
+  /// Get OrbitNest Studio base URL.
+  ///
+  /// Uses [kBaseUrl] (`https://api.orbitnest.io`) by default.
+  /// Can be overridden via the `ORBITNEST_API_URL` env variable in `.env`
+  /// — useful when pointing at a local development server.
+  ///
+  /// When running on an Android emulator in debug mode any `localhost` /
+  /// `127.0.0.1` value is automatically rewritten to `10.0.2.2` so the
+  /// emulator can reach the host machine.
+  static String get baseUrl {
+    // Allow an env-var override for local development
+    final envUrl = _initialized ? dotenv.env['ORBITNEST_API_URL'] : null;
+    final raw = (envUrl != null && envUrl.isNotEmpty) ? envUrl : kBaseUrl;
+    return resolveUrl(raw);
+  }
 
   /// Get anonymous key
   static String get anonKey {

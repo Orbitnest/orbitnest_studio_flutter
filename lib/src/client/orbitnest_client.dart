@@ -76,7 +76,7 @@ class OrbitNestClient {
     final resolvedSlug = EnvConfig.decodeProjectSlugFromJwt(resolvedAnonKey);
 
     return OrbitNestClient._(
-      baseUrl: EnvConfig.kBaseUrl,
+      baseUrl: EnvConfig.baseUrl,
       projectSlug: resolvedSlug,
       anonKey: resolvedAnonKey,
       serviceRoleKey: serviceRoleKey ?? EnvConfig.serviceRoleKey,
