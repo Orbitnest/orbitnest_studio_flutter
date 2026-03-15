@@ -159,23 +159,21 @@ class AuthInterceptor extends Interceptor {
   }
 
   bool _isAuthEndpoint(String path) {
-    final authPaths = [
+    // Only the specific public auth operations should skip the token.
+    // Broad path prefixes like '/api/projects/' must NOT appear here because
+    // they would also match authenticated endpoints such as /auth/user
+    // (profile update) and /auth/refresh, causing those calls to go out
+    // without a token and fail with 401.
+    const authPaths = [
       '/auth/signin',
       '/auth/signup',
-      '/auth/refresh',
+      '/auth/verify-signup',
       '/auth/verify',
       '/auth/recover',
       '/auth/reset-password',
-      '/api/projects/', // Only project-level auth endpoints (not database/functions)
-      '/api/project/', // Client-level endpoints
     ];
 
-    // Check if it's an auth endpoint, but NOT a database or function endpoint
-    final isAuth = authPaths.any((authPath) => path.contains(authPath));
-    final isDatabase = path.contains('/database/');
-    final isFunction = path.contains('/functions/');
-
-    return isAuth && !isDatabase && !isFunction;
+    return authPaths.any((authPath) => path.contains(authPath));
   }
 
   /// Check if this is a client endpoint that requires authentication
