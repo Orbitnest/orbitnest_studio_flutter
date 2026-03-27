@@ -6,17 +6,25 @@ import 'bloc/auth_state.dart';
 import 'models/user.dart';
 import 'models/session.dart';
 import 'exceptions/auth_exception.dart';
+import 'services/auth_service.dart';
+import 'services/token_manager.dart';
 
 /// Simplified Auth API that wraps the BLoC pattern
 /// Provides direct async methods like Supabase
 class OrbitNestAuth extends ChangeNotifier {
   final AuthBloc _authBloc;
+  final AuthService _authService;
+  final TokenManager _tokenManager;
   late final StreamSubscription _stateSubscription;
 
   AuthState _currentState = const AuthInitialState();
   final Map<String, Completer<dynamic>> _pendingOperations = {};
 
-  OrbitNestAuth(this._authBloc) {
+  OrbitNestAuth(
+    this._authBloc,
+    this._authService,
+    this._tokenManager,
+  ) {
     _stateSubscription = _authBloc.stream.listen(_handleStateChange);
     _currentState = _authBloc.state;
   }
@@ -270,6 +278,23 @@ class OrbitNestAuth extends ChangeNotifier {
     );
 
     return result['user'] as User;
+  }
+
+  /// Verify a JWT token against the server (ON-SEC-04)
+  /// Returns a map with valid, user, and error fields from the API
+  Future<Map<String, dynamic>> verifyToken(String token) async {
+    try {
+      return await _authService.verifyToken(token);
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException.fromException(e);
+    }
+  }
+
+  /// Decode a JWT token locally without a network call (ON-SEC-06)
+  /// Returns the token payload, or null if the token is malformed
+  Map<String, dynamic>? decodeToken(String token) {
+    return _tokenManager.decodeToken(token);
   }
 
   @override

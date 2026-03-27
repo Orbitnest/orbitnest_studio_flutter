@@ -128,7 +128,7 @@ class OrbitNestClient {
     _functionsBloc = FunctionsBloc(functionsRepository: _functionsRepository);
 
     // Initialize simplified API wrappers
-    _auth = OrbitNestAuth(_authBloc);
+    _auth = OrbitNestAuth(_authBloc, _authService, _tokenManager);
     _database = OrbitNestDatabase(_databaseBloc, _projectSlug);
     _functions = OrbitNestFunctions(_functionsBloc);
   }
