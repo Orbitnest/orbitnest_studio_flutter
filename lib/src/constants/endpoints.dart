@@ -63,6 +63,8 @@ class Endpoints {
       '/api/projects/$projectId/auth/signout';
   static String projectSignoutAll(String projectId) =>
       '/api/projects/$projectId/auth/signout-all';
+  static String projectVerifyToken(String projectId) =>
+      '/api/projects/$projectId/auth/verify';
 
   // Admin Project Auth
   static String projectAdminUsers(String projectId) =>

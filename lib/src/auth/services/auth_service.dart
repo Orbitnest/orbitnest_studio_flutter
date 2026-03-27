@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import '../../client/http_client.dart';
 import '../../constants/endpoints.dart';
 import '../../constants/error_codes.dart';
@@ -257,6 +258,23 @@ class AuthService {
       );
 
       return AuthResponse.fromJson(response.data);
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  /// Verify a JWT token against the server
+  /// Returns a map with valid, user, and error fields
+  Future<Map<String, dynamic>> verifyToken(String token) async {
+    try {
+      final response = await _httpClient.get(
+        Endpoints.projectVerifyToken(_projectSlug),
+        options: Options(
+          headers: {'Authorization': 'Bearer $token'},
+        ),
+      );
+
+      return response.data as Map<String, dynamic>;
     } catch (e) {
       throw AuthException.fromException(e);
     }
