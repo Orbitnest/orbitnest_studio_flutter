@@ -41,6 +41,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthClearErrorEvent>(_onClearError);
     on<AuthRegisterPasskeyEvent>(_onRegisterPasskey);
     on<AuthSignInWithPasskeyEvent>(_onSignInWithPasskey);
+    on<AuthSignUpWithPasskeyEvent>(_onSignUpWithPasskey);
     on<AuthListPasskeysEvent>(_onListPasskeys);
     on<AuthRenamePasskeyEvent>(_onRenamePasskey);
     on<AuthRevokePasskeyEvent>(_onRevokePasskey);
@@ -573,6 +574,41 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       } else {
         emit(AuthErrorState(
           message: response.message ?? 'Passkey sign-in failed',
+        ));
+      }
+    } catch (e) {
+      emit(AuthErrorState(message: _getErrorMessage(e), code: _getErrorCode(e)));
+    }
+  }
+
+  Future<void> _onSignUpWithPasskey(
+    AuthSignUpWithPasskeyEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoadingState());
+    try {
+      final options = await _authRepository.passkeySignupOptions(
+        email: event.email,
+        userMetadata: event.userMetadata,
+        deviceName: event.deviceName,
+      );
+      final attestation = await _passkeyAuthenticator.register(
+        Map<String, dynamic>.from(options['publicKey'] as Map),
+      );
+      final response = await _authRepository.passkeySignupVerify(
+        challengeId: options['challenge_id'] as String,
+        attestation: attestation,
+        deviceName: event.deviceName,
+      );
+      if (response.isAuthenticated) {
+        await _tokenManager.storeSession(response.session!);
+        emit(AuthAuthenticatedState(
+          user: response.user!,
+          session: response.session!,
+        ));
+      } else {
+        emit(AuthErrorState(
+          message: response.message ?? 'Passkey sign-up failed',
         ));
       }
     } catch (e) {

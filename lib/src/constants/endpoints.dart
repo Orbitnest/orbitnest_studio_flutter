@@ -71,6 +71,10 @@ class Endpoints {
       '/api/projects/$projectId/auth/passkey/register/options';
   static String projectPasskeyRegisterVerify(String projectId) =>
       '/api/projects/$projectId/auth/passkey/register/verify';
+  static String projectPasskeySignupOptions(String projectId) =>
+      '/api/projects/$projectId/auth/passkey/signup/options';
+  static String projectPasskeySignupVerify(String projectId) =>
+      '/api/projects/$projectId/auth/passkey/signup/verify';
   static String projectPasskeyLoginOptions(String projectId) =>
       '/api/projects/$projectId/auth/passkey/login/options';
   static String projectPasskeyLoginVerify(String projectId) =>

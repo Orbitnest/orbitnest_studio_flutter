@@ -140,6 +140,17 @@ class AuthSignInWithPasskeyEvent extends AuthEvent {
   final String? identifier;
 }
 
+class AuthSignUpWithPasskeyEvent extends AuthEvent {
+  const AuthSignUpWithPasskeyEvent({
+    required this.email,
+    this.userMetadata,
+    this.deviceName,
+  });
+  final String email;
+  final Map<String, dynamic>? userMetadata;
+  final String? deviceName;
+}
+
 class AuthListPasskeysEvent extends AuthEvent {
   const AuthListPasskeysEvent();
 }

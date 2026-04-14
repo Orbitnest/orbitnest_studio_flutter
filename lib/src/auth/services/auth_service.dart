@@ -300,6 +300,50 @@ class AuthService {
     }
   }
 
+  /// Begin a passkey sign-up ceremony — creates a passwordless user record
+  /// on the server and returns WebAuthn attestation options.
+  Future<Map<String, dynamic>> passkeySignupOptions({
+    required String email,
+    Map<String, dynamic>? userMetadata,
+    String? deviceName,
+  }) async {
+    try {
+      final response = await _httpClient.post(
+        Endpoints.projectPasskeySignupOptions(_projectSlug),
+        data: {
+          'email': email,
+          if (userMetadata != null) 'user_metadata': userMetadata,
+          if (deviceName != null) 'device_name': deviceName,
+        },
+      );
+      return Map<String, dynamic>.from(response.data as Map);
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  /// Finish a passkey sign-up ceremony. Returns an AuthResponse with the
+  /// new session so the caller can store it.
+  Future<AuthResponse> passkeySignupVerify({
+    required String challengeId,
+    required Map<String, dynamic> attestation,
+    String? deviceName,
+  }) async {
+    try {
+      final response = await _httpClient.post(
+        Endpoints.projectPasskeySignupVerify(_projectSlug),
+        data: {
+          'challenge_id': challengeId,
+          'attestation': attestation,
+          if (deviceName != null) 'device_name': deviceName,
+        },
+      );
+      return AuthResponse.fromJson(response.data);
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
   /// Request server-issued assertion options for passkey sign-in.
   /// [identifier] may be the user email (enables `allowCredentials`) or null
   /// for a discoverable-credential flow.
