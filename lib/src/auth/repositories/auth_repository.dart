@@ -206,6 +206,38 @@ class AuthRepository {
     }
   }
 
+  Future<Map<String, dynamic>> passkeySignupOptions({
+    required String email,
+    Map<String, dynamic>? userMetadata,
+    String? deviceName,
+  }) async {
+    try {
+      return await _authService.passkeySignupOptions(
+        email: email,
+        userMetadata: userMetadata,
+        deviceName: deviceName,
+      );
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  Future<AuthResponse> passkeySignupVerify({
+    required String challengeId,
+    required Map<String, dynamic> attestation,
+    String? deviceName,
+  }) async {
+    try {
+      return await _authService.passkeySignupVerify(
+        challengeId: challengeId,
+        attestation: attestation,
+        deviceName: deviceName,
+      );
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
   Future<Map<String, dynamic>> passkeyLoginOptions({String? identifier}) async {
     try {
       return await _authService.passkeyLoginOptions(identifier: identifier);

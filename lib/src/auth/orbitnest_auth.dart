@@ -317,6 +317,23 @@ class OrbitNestAuth extends ChangeNotifier {
     return PasskeyDevice.fromJson(result);
   }
 
+  /// Sign up a new account using a passkey in a single ceremony.
+  /// Only [email] is required; [userMetadata] and [deviceName] are optional.
+  Future<Map<String, dynamic>> signUpWithPasskey({
+    required String email,
+    Map<String, dynamic>? userMetadata,
+    String? deviceName,
+  }) async {
+    return await _executeWithCompleter<Map<String, dynamic>>(
+      'auth_success',
+      AuthSignUpWithPasskeyEvent(
+        email: email,
+        userMetadata: userMetadata,
+        deviceName: deviceName,
+      ),
+    );
+  }
+
   /// Sign in using a passkey. Drives the native assertion ceremony and stores
   /// the resulting session.
   Future<Map<String, dynamic>> signInWithPasskey({String? identifier}) async {
