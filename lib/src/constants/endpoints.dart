@@ -66,6 +66,20 @@ class Endpoints {
   static String projectVerifyToken(String projectId) =>
       '/api/projects/$projectId/auth/verify';
 
+  // Passkey (WebAuthn) — project-user realm
+  static String projectPasskeyRegisterOptions(String projectId) =>
+      '/api/projects/$projectId/auth/passkey/register/options';
+  static String projectPasskeyRegisterVerify(String projectId) =>
+      '/api/projects/$projectId/auth/passkey/register/verify';
+  static String projectPasskeyLoginOptions(String projectId) =>
+      '/api/projects/$projectId/auth/passkey/login/options';
+  static String projectPasskeyLoginVerify(String projectId) =>
+      '/api/projects/$projectId/auth/passkey/login/verify';
+  static String projectPasskeyDevices(String projectId) =>
+      '/api/projects/$projectId/auth/passkey/devices';
+  static String projectPasskeyDevice(String projectId, String deviceId) =>
+      '/api/projects/$projectId/auth/passkey/devices/$deviceId';
+
   // Admin Project Auth
   static String projectAdminUsers(String projectId) =>
       '/api/projects/$projectId/auth/admin/users';

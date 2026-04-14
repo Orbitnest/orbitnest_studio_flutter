@@ -51,6 +51,13 @@ class ErrorCodes {
   static const String invalidApiKey = 'INVALID_API_KEY';
   static const String projectInactive = 'PROJECT_INACTIVE';
 
+  // Passkey / WebAuthn errors
+  static const String passkeyCancelled = 'PASSKEY_CANCELLED';
+  static const String passkeyAlreadyExists = 'PASSKEY_ALREADY_EXISTS';
+  static const String passkeyUnsupported = 'PASSKEY_UNSUPPORTED';
+  static const String passkeyNotAvailable = 'PASSKEY_NOT_AVAILABLE';
+  static const String passkeyDomainNotAssociated = 'PASSKEY_DOMAIN_NOT_ASSOCIATED';
+
   // Validation errors
   static const String validationError = 'VALIDATION_ERROR';
   static const String missingRequiredField = 'MISSING_REQUIRED_FIELD';

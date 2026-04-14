@@ -5,9 +5,11 @@ import 'bloc/auth_event.dart';
 import 'bloc/auth_state.dart';
 import 'models/user.dart';
 import 'models/session.dart';
+import 'models/passkey_device.dart';
 import 'exceptions/auth_exception.dart';
 import 'services/auth_service.dart';
 import 'services/token_manager.dart';
+import 'services/passkey_authenticator_service.dart';
 
 /// Simplified Auth API that wraps the BLoC pattern
 /// Provides direct async methods like Supabase
@@ -62,6 +64,18 @@ class OrbitNestAuth extends ChangeNotifier {
         break;
       case AuthUnauthenticatedState():
         _completePendingOperation('unauthenticated', null);
+        break;
+      case AuthPasskeyRegisteredState(:final device):
+        _completePendingOperation('passkey_registered', device.toJson());
+        break;
+      case AuthPasskeysListedState(:final devices):
+        _completePendingOperation('passkeys_listed', devices);
+        break;
+      case AuthPasskeyUpdatedState():
+        _completePendingOperation('passkey_updated', null);
+        break;
+      case AuthPasskeyRevokedState():
+        _completePendingOperation('passkey_revoked', null);
         break;
       case AuthErrorState(:final message, :final code):
         // Complete all pending operations with the error
@@ -278,6 +292,65 @@ class OrbitNestAuth extends ChangeNotifier {
     );
 
     return result['user'] as User;
+  }
+
+  // ── Passkey / WebAuthn ────────────────────────────────────────────────────
+
+  PasskeyAuthenticatorService get _passkeyAuth {
+    return _passkeyAuthenticator ??= PasskeyAuthenticatorService();
+  }
+
+  PasskeyAuthenticatorService? _passkeyAuthenticator;
+
+  /// True if the platform exposes any passkey authenticator (Touch/Face ID,
+  /// device PIN, security key, etc.).
+  Future<bool> isPasskeySupported() => _passkeyAuth.isAvailable();
+
+  /// Register a new passkey for the currently authenticated user.
+  /// Drives the native registration ceremony and posts the attestation back
+  /// to the OrbitNest server.
+  Future<PasskeyDevice> registerPasskey({String? deviceName}) async {
+    final result = await _executeWithCompleter<Map<String, dynamic>>(
+      'passkey_registered',
+      AuthRegisterPasskeyEvent(deviceName: deviceName),
+    );
+    return PasskeyDevice.fromJson(result);
+  }
+
+  /// Sign in using a passkey. Drives the native assertion ceremony and stores
+  /// the resulting session.
+  Future<Map<String, dynamic>> signInWithPasskey({String? identifier}) async {
+    return await _executeWithCompleter<Map<String, dynamic>>(
+      'auth_success',
+      AuthSignInWithPasskeyEvent(identifier: identifier),
+    );
+  }
+
+  /// List all registered passkeys for the current user.
+  Future<List<PasskeyDevice>> listPasskeys() async {
+    return await _executeWithCompleter<List<PasskeyDevice>>(
+      'passkeys_listed',
+      const AuthListPasskeysEvent(),
+    );
+  }
+
+  /// Rename a registered passkey.
+  Future<void> renamePasskey({
+    required String deviceId,
+    required String deviceName,
+  }) async {
+    await _executeWithCompleter<void>(
+      'passkey_updated',
+      AuthRenamePasskeyEvent(deviceId: deviceId, deviceName: deviceName),
+    );
+  }
+
+  /// Revoke (remove) a registered passkey.
+  Future<void> revokePasskey({required String deviceId}) async {
+    await _executeWithCompleter<void>(
+      'passkey_revoked',
+      AuthRevokePasskeyEvent(deviceId: deviceId),
+    );
   }
 
   /// Verify a JWT token against the server (ON-SEC-04)

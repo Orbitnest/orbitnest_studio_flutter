@@ -127,3 +127,33 @@ class AuthInitializeEvent extends AuthEvent {
 class AuthClearErrorEvent extends AuthEvent {
   const AuthClearErrorEvent();
 }
+
+// ── Passkey / WebAuthn ──────────────────────────────────────────────────────
+
+class AuthRegisterPasskeyEvent extends AuthEvent {
+  const AuthRegisterPasskeyEvent({this.deviceName});
+  final String? deviceName;
+}
+
+class AuthSignInWithPasskeyEvent extends AuthEvent {
+  const AuthSignInWithPasskeyEvent({this.identifier});
+  final String? identifier;
+}
+
+class AuthListPasskeysEvent extends AuthEvent {
+  const AuthListPasskeysEvent();
+}
+
+class AuthRenamePasskeyEvent extends AuthEvent {
+  const AuthRenamePasskeyEvent({
+    required this.deviceId,
+    required this.deviceName,
+  });
+  final String deviceId;
+  final String deviceName;
+}
+
+class AuthRevokePasskeyEvent extends AuthEvent {
+  const AuthRevokePasskeyEvent({required this.deviceId});
+  final String deviceId;
+}

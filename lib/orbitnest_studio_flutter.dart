@@ -12,7 +12,9 @@ export 'src/edge_functions/orbitnest_functions.dart';
 export 'src/auth/models/user.dart';
 export 'src/auth/models/session.dart';
 export 'src/auth/models/auth_response.dart';
+export 'src/auth/models/passkey_device.dart';
 export 'src/auth/exceptions/auth_exception.dart';
+export 'src/auth/services/passkey_authenticator_service.dart';
 
 // Database models and query builder
 export 'src/database/models/postgrest_response.dart';
