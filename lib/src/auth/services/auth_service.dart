@@ -263,6 +263,118 @@ class AuthService {
     }
   }
 
+  // ── Passkey / WebAuthn ────────────────────────────────────────────────────
+
+  /// Request server-issued attestation options for registering a new passkey.
+  /// User must already be authenticated.
+  Future<Map<String, dynamic>> passkeyRegisterOptions({String? deviceName}) async {
+    try {
+      final response = await _httpClient.post(
+        Endpoints.projectPasskeyRegisterOptions(_projectSlug),
+        data: {if (deviceName != null) 'device_name': deviceName},
+      );
+      return Map<String, dynamic>.from(response.data as Map);
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  /// Verify the platform attestation and persist the credential.
+  Future<Map<String, dynamic>> passkeyRegisterVerify({
+    required String challengeId,
+    required Map<String, dynamic> attestation,
+    String? deviceName,
+  }) async {
+    try {
+      final response = await _httpClient.post(
+        Endpoints.projectPasskeyRegisterVerify(_projectSlug),
+        data: {
+          'challenge_id': challengeId,
+          'attestation': attestation,
+          if (deviceName != null) 'device_name': deviceName,
+        },
+      );
+      return Map<String, dynamic>.from(response.data as Map);
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  /// Request server-issued assertion options for passkey sign-in.
+  /// [identifier] may be the user email (enables `allowCredentials`) or null
+  /// for a discoverable-credential flow.
+  Future<Map<String, dynamic>> passkeyLoginOptions({String? identifier}) async {
+    try {
+      final response = await _httpClient.post(
+        Endpoints.projectPasskeyLoginOptions(_projectSlug),
+        data: {if (identifier != null) 'identifier': identifier},
+      );
+      return Map<String, dynamic>.from(response.data as Map);
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  /// Verify the platform assertion and exchange it for a session.
+  Future<AuthResponse> passkeyLoginVerify({
+    required String challengeId,
+    required Map<String, dynamic> assertion,
+  }) async {
+    try {
+      final response = await _httpClient.post(
+        Endpoints.projectPasskeyLoginVerify(_projectSlug),
+        data: {
+          'challenge_id': challengeId,
+          'assertion': assertion,
+        },
+      );
+      return AuthResponse.fromJson(response.data);
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  /// List all active passkeys for the current user.
+  Future<List<Map<String, dynamic>>> listPasskeys() async {
+    try {
+      final response = await _httpClient.get(
+        Endpoints.projectPasskeyDevices(_projectSlug),
+      );
+      return (response.data as List<dynamic>)
+          .map((e) => Map<String, dynamic>.from(e as Map))
+          .toList();
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  /// Rename a registered passkey.
+  Future<Map<String, dynamic>> renamePasskey({
+    required String deviceId,
+    required String deviceName,
+  }) async {
+    try {
+      final response = await _httpClient.patch(
+        Endpoints.projectPasskeyDevice(_projectSlug, deviceId),
+        data: {'device_name': deviceName},
+      );
+      return Map<String, dynamic>.from(response.data as Map);
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  /// Revoke (soft-delete) a registered passkey.
+  Future<void> revokePasskey({required String deviceId}) async {
+    try {
+      await _httpClient.delete(
+        Endpoints.projectPasskeyDevice(_projectSlug, deviceId),
+      );
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
   /// Verify a JWT token against the server
   /// Returns a map with valid, user, and error fields
   Future<Map<String, dynamic>> verifyToken(String token) async {

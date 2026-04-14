@@ -179,4 +179,82 @@ class AuthRepository {
       throw AuthException.fromException(e);
     }
   }
+
+  // ── Passkey / WebAuthn ────────────────────────────────────────────────────
+
+  Future<Map<String, dynamic>> passkeyRegisterOptions({String? deviceName}) async {
+    try {
+      return await _authService.passkeyRegisterOptions(deviceName: deviceName);
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> passkeyRegisterVerify({
+    required String challengeId,
+    required Map<String, dynamic> attestation,
+    String? deviceName,
+  }) async {
+    try {
+      return await _authService.passkeyRegisterVerify(
+        challengeId: challengeId,
+        attestation: attestation,
+        deviceName: deviceName,
+      );
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> passkeyLoginOptions({String? identifier}) async {
+    try {
+      return await _authService.passkeyLoginOptions(identifier: identifier);
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  Future<AuthResponse> passkeyLoginVerify({
+    required String challengeId,
+    required Map<String, dynamic> assertion,
+  }) async {
+    try {
+      return await _authService.passkeyLoginVerify(
+        challengeId: challengeId,
+        assertion: assertion,
+      );
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  Future<List<Map<String, dynamic>>> listPasskeys() async {
+    try {
+      return await _authService.listPasskeys();
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  Future<Map<String, dynamic>> renamePasskey({
+    required String deviceId,
+    required String deviceName,
+  }) async {
+    try {
+      return await _authService.renamePasskey(
+        deviceId: deviceId,
+        deviceName: deviceName,
+      );
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  Future<void> revokePasskey({required String deviceId}) async {
+    try {
+      await _authService.revokePasskey(deviceId: deviceId);
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
 }

@@ -1,5 +1,6 @@
 import '../models/user.dart';
 import '../models/session.dart';
+import '../models/passkey_device.dart';
 
 /// Authentication states
 sealed class AuthState {
@@ -58,6 +59,30 @@ class AuthUserUpdatedState extends AuthState {
 
   final User user;
   final String? message;
+}
+
+class AuthPasskeysListedState extends AuthState {
+  const AuthPasskeysListedState({required this.devices});
+  final List<PasskeyDevice> devices;
+}
+
+class AuthPasskeyRegisteredState extends AuthState {
+  const AuthPasskeyRegisteredState({required this.device});
+  final PasskeyDevice device;
+}
+
+class AuthPasskeyUpdatedState extends AuthState {
+  const AuthPasskeyUpdatedState({
+    required this.deviceId,
+    required this.message,
+  });
+  final String deviceId;
+  final String message;
+}
+
+class AuthPasskeyRevokedState extends AuthState {
+  const AuthPasskeyRevokedState({required this.deviceId});
+  final String deviceId;
 }
 
 class AuthErrorState extends AuthState {
