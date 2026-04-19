@@ -12,6 +12,7 @@ import '../edge_functions/bloc/functions_bloc.dart';
 import '../edge_functions/repositories/functions_repository.dart';
 import '../edge_functions/services/functions_service.dart';
 import '../edge_functions/orbitnest_functions.dart';
+import '../jobs/services/jobs_service.dart';
 import '../utils/env_config.dart';
 import 'http_client.dart';
 
@@ -28,6 +29,7 @@ class OrbitNestClient {
   late final AuthService _authService;
   late final DatabaseService _databaseService;
   late final FunctionsService _functionsService;
+  late final JobsService _jobsService;
 
   // Repositories
   late final AuthRepository _authRepository;
@@ -112,6 +114,11 @@ class OrbitNestClient {
       projectSlug: _projectSlug,
     );
 
+    _jobsService = JobsService(
+      httpClient: _httpClient,
+      projectSlug: _projectSlug,
+    );
+
     // Initialize repositories
     _authRepository = AuthRepository(authService: _authService);
     _databaseRepository = DatabaseRepository(databaseService: _databaseService);
@@ -141,6 +148,9 @@ class OrbitNestClient {
 
   /// Get the functions API (simplified interface)
   OrbitNestFunctions get functions => _functions;
+
+  /// Get the background jobs API (admin only)
+  JobsService get jobs => _jobsService;
 
   // ============================
   // Direct Function Methods (Supabase-style API)

@@ -25,6 +25,11 @@ export 'src/database/exceptions/database_exception.dart';
 export 'src/edge_functions/models/function_response.dart';
 export 'src/edge_functions/exceptions/function_exception.dart';
 
+// Background Jobs models, service, and exceptions
+export 'src/jobs/models/job_response.dart';
+export 'src/jobs/services/jobs_service.dart';
+export 'src/jobs/exceptions/job_exception.dart';
+
 // Types and utilities
 export 'src/types/json_types.dart';
 export 'src/types/response_types.dart';

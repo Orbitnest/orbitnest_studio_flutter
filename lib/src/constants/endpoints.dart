@@ -177,6 +177,16 @@ class Endpoints {
   static String projectExportLogs(String projectId) =>
       '/api/projects/$projectId/logs/export';
 
+  // Background Jobs
+  static String projectJobs(String projectId) =>
+      '/api/projects/$projectId/jobs';
+  static String projectJobByName(String projectId, String name) =>
+      '/api/projects/$projectId/jobs/$name';
+  static String projectJobTrigger(String projectId, String name) =>
+      '/api/projects/$projectId/jobs/$name/trigger';
+  static String projectJobRuns(String projectId, String name) =>
+      '/api/projects/$projectId/jobs/$name/runs';
+
   // Health Checks
   static const String databaseHealth = '/api/database/health';
 }
