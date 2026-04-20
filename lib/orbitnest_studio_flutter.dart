@@ -30,6 +30,9 @@ export 'src/jobs/models/job_response.dart';
 export 'src/jobs/services/jobs_service.dart';
 export 'src/jobs/exceptions/job_exception.dart';
 
+// Realtime — live DB subscriptions, broadcasts, and presence
+export 'src/realtime/orbitnest_realtime.dart';
+
 // Types and utilities
 export 'src/types/json_types.dart';
 export 'src/types/response_types.dart';

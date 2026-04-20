@@ -13,6 +13,7 @@ import '../edge_functions/repositories/functions_repository.dart';
 import '../edge_functions/services/functions_service.dart';
 import '../edge_functions/orbitnest_functions.dart';
 import '../jobs/services/jobs_service.dart';
+import '../realtime/orbitnest_realtime.dart';
 import '../utils/env_config.dart';
 import 'http_client.dart';
 
@@ -45,6 +46,7 @@ class OrbitNestClient {
   late final OrbitNestAuth _auth;
   late final OrbitNestDatabase _database;
   late final OrbitNestFunctions _functions;
+  late final OrbitNestRealtime _realtime;
 
   OrbitNestClient._({
     required String baseUrl,
@@ -138,6 +140,11 @@ class OrbitNestClient {
     _auth = OrbitNestAuth(_authBloc, _authService, _tokenManager);
     _database = OrbitNestDatabase(_databaseBloc, _projectSlug);
     _functions = OrbitNestFunctions(_functionsBloc);
+    _realtime = OrbitNestRealtime(
+      baseUrl: _baseUrl,
+      projectSlug: _projectSlug,
+      apiKey: _anonKey,
+    );
   }
 
   /// Get the authentication API (simplified interface)
@@ -148,6 +155,21 @@ class OrbitNestClient {
 
   /// Get the functions API (simplified interface)
   OrbitNestFunctions get functions => _functions;
+
+  /// Get the realtime API — create live subscriptions and broadcasts.
+  ///
+  /// ```dart
+  /// final ch = client.realtime.channel('orders')
+  ///   ..onPostgresChanges(
+  ///       event: PgEvent.insert,
+  ///       table: 'orders',
+  ///       callback: (e) => print(e.newRow))
+  ///   ..subscribe();
+  /// ```
+  OrbitNestRealtime get realtime => _realtime;
+
+  /// Convenience shortcut: create a realtime channel directly on the client.
+  RealtimeChannel channel(String name) => _realtime.channel(name);
 
   /// Get the background jobs API (admin only)
   JobsService get jobs => _jobsService;
@@ -303,6 +325,7 @@ class OrbitNestClient {
     _auth.dispose();
     _database.dispose();
     _functions.dispose();
+    _realtime.dispose();
     _authBloc.close();
     _databaseBloc.close();
     _functionsBloc.close();
