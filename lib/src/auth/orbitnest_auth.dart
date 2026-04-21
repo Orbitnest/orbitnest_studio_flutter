@@ -136,13 +136,17 @@ class OrbitNestAuth extends ChangeNotifier {
     };
   }
 
-  /// Get current session (null if not authenticated)
+  /// Get current session (null only when explicitly unauthenticated).
+  ///
+  /// Transient states (AuthPasskeysLoaded, AuthPasskeyRegisteredState,
+  /// AuthLoadingState, etc.) do NOT clear the session — they return
+  /// [_lastKnownSession] so callers like refreshCurrentUser() can still
+  /// read the access token while a transient operation is in flight.
   Session? get currentSession {
     return switch (_currentState) {
       AuthAuthenticatedState(:final session) => session,
-      // AuthUserUpdatedState carries no session; return the last cached one.
-      AuthUserUpdatedState() => _lastKnownSession,
-      _ => null,
+      AuthUnauthenticatedState() => null, // explicitly signed out
+      _ => _lastKnownSession,            // any transient state → use cached session
     };
   }
 
