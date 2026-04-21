@@ -4,6 +4,7 @@ import '../repositories/auth_repository.dart';
 import '../services/token_manager.dart';
 import '../services/passkey_authenticator_service.dart';
 import '../models/passkey_device.dart';
+import '../models/session.dart';
 import '../exceptions/auth_exception.dart';
 import '../../utils/logger.dart';
 import 'auth_event.dart';
@@ -509,9 +510,50 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
 
       OrbitNestLogger.debug('🔐 [AuthBloc] Session valid, emitting authenticated state');
       emit(AuthAuthenticatedState(user: session.user, session: session));
+
+      // Kick off a background fetch of the latest user profile so any stale
+      // stored session (e.g. missing user_metadata set in a previous app run
+      // right before a crash / force-quit) is reconciled with the server on
+      // next launch. Fire-and-forget — the in-memory state is already emitted
+      // above so the UI is unblocked.
+      unawaited(_reconcileStoredUserFromServer(session));
     } catch (e) {
       OrbitNestLogger.debug('🔐 [AuthBloc] Error during initialization: $e');
       emit(const AuthUnauthenticatedState());
+    }
+  }
+
+  /// Fetch the authoritative user record from GET /auth/user and, if it
+  /// differs from the one in the stored session, persist the fresher copy
+  /// back to secure storage. This keeps `user_metadata` (display_name, etc.)
+  /// from going stale across app restarts — the upper app layer
+  /// (AppAuthBloc) is responsible for emitting the refreshed UI state via
+  /// its own `refreshCurrentUser` pathway; here we only fix the persistence
+  /// so that *subsequent* cold starts see the latest user.
+  Future<void> _reconcileStoredUserFromServer(Session currentSession) async {
+    try {
+      final freshUser = await _authRepository.getUser();
+      if (freshUser == null) return;
+
+      // If the server copy already matches what we have in storage, skip
+      // the extra write.
+      final inMemoryMetadata = currentSession.user.userMetadata;
+      final freshMetadata = freshUser.userMetadata;
+      final metadataChanged =
+          (inMemoryMetadata?.toString() ?? '') !=
+          (freshMetadata?.toString() ?? '');
+      if (!metadataChanged &&
+          currentSession.user.email == freshUser.email &&
+          currentSession.user.id == freshUser.id) {
+        return;
+      }
+
+      final updatedSession = currentSession.copyWith(user: freshUser);
+      await _tokenManager.storeSession(updatedSession);
+    } catch (e) {
+      OrbitNestLogger.debug(
+        '🔐 [AuthBloc] Background user reconciliation failed (non-fatal): $e',
+      );
     }
   }
 

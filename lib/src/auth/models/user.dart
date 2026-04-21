@@ -1,3 +1,5 @@
+import 'dart:convert';
+
 /// User model representing an authenticated user
 class User {
   const User({
@@ -47,10 +49,28 @@ class User {
   }
 
   /// Safely extracts a Map from JSON, handling various types
+  ///
+  /// Accepts Map, String (JSON-encoded), List-of-Map, and returns null for
+  /// anything else. Handling a stringified JSON value is necessary because
+  /// some pg driver/JSONB configurations can surface JSONB columns as a
+  /// serialized string rather than a parsed object, which would otherwise
+  /// silently drop user_metadata into null and cause "Not Set" UI bugs.
   static Map<String, dynamic>? _parseMapField(dynamic value) {
     if (value == null) return null;
     if (value is Map<String, dynamic>) return value;
     if (value is Map) return Map<String, dynamic>.from(value);
+    if (value is String) {
+      final trimmed = value.trim();
+      if (trimmed.isEmpty) return null;
+      try {
+        final decoded = jsonDecode(trimmed);
+        if (decoded is Map<String, dynamic>) return decoded;
+        if (decoded is Map) return Map<String, dynamic>.from(decoded);
+      } catch (_) {
+        return null;
+      }
+      return null;
+    }
     if (value is List && value.isNotEmpty && value.first is Map) {
       return Map<String, dynamic>.from(value.first as Map);
     }
