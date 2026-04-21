@@ -189,13 +189,31 @@ class AuthService {
   }
 
   /// Get current user
+  ///
+  /// The server wraps the payload under a `user` key
+  /// (`{"user": {"id": "...", "user_metadata": {...}}}`) so we unwrap it
+  /// before constructing the model. If we passed `response.data` directly,
+  /// `User.fromJson` would read `json['id']`/`json['user_metadata']` from the
+  /// outer map and get `null` for every field — which silently corrupts the
+  /// persisted user on cold start (`_reconcileStoredUserFromServer` in
+  /// `AuthBloc._onInitialize` writes the result back to storage) and was the
+  /// source of the "Not Set" full-name bug that resurfaced after the
+  /// 8c010a8 reconcile was added.
+  ///
+  /// We also accept a non-wrapped payload defensively — the server contract
+  /// has been inconsistent in the past and UserUpdateResponse.fromJson
+  /// handles both shapes.
   Future<User> getUser() async {
     try {
       final response = await _httpClient.get(
         Endpoints.projectUser(_projectSlug),
       );
 
-      return User.fromJson(response.data);
+      final data = response.data as Map<String, dynamic>;
+      final userJson = data.containsKey('user') && data['user'] is Map
+          ? Map<String, dynamic>.from(data['user'] as Map)
+          : data;
+      return User.fromJson(userJson);
     } catch (e) {
       throw AuthException.fromException(e);
     }
