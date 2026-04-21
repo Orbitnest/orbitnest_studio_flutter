@@ -21,6 +21,7 @@ class OrbitNestAuth extends ChangeNotifier {
 
   AuthState _currentState = const AuthInitialState();
   final Map<String, Completer<dynamic>> _pendingOperations = {};
+  Session? _lastKnownSession;
 
   OrbitNestAuth(
     this._authBloc,
@@ -34,6 +35,13 @@ class OrbitNestAuth extends ChangeNotifier {
   void _handleStateChange(AuthState state) {
     _currentState = state;
     notifyListeners();
+
+    // Cache the session whenever we enter an authenticated state so it remains
+    // accessible even after transitioning to AuthUserUpdatedState (which carries
+    // no session field of its own).
+    if (state is AuthAuthenticatedState) {
+      _lastKnownSession = state.session;
+    }
 
     // Complete pending operations based on state changes
     switch (state) {
@@ -132,6 +140,8 @@ class OrbitNestAuth extends ChangeNotifier {
   Session? get currentSession {
     return switch (_currentState) {
       AuthAuthenticatedState(:final session) => session,
+      // AuthUserUpdatedState carries no session; return the last cached one.
+      AuthUserUpdatedState() => _lastKnownSession,
       _ => null,
     };
   }
@@ -140,6 +150,7 @@ class OrbitNestAuth extends ChangeNotifier {
   bool get isAuthenticated {
     return switch (_currentState) {
       AuthAuthenticatedState() => true,
+      AuthUserUpdatedState() => true,
       _ => false,
     };
   }
