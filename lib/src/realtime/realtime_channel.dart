@@ -271,6 +271,13 @@ class RealtimeChannel {
 
 /// Manages the WebSocket connection and all channels. Used internally by
 /// [OrbitNestRealtime].
+// Reconnect tuning.
+const int _kBaseReconnectDelayMs = 1000;
+const int _kRateLimitedReconnectDelayMs = 10000;
+const int _kMaxReconnectDelayMs = 60000;
+// WS close code the gateway uses when it closes an abusive socket.
+const int _kWsCloseRateLimited = 4029;
+
 class RealtimeChannelManager {
   final String wsUrl;
   final String? userJwt;
@@ -279,7 +286,7 @@ class RealtimeChannelManager {
   StreamSubscription? _sub;
   final Map<String, RealtimeChannel> _channels = {};
   bool _shouldReconnect = true;
-  int _reconnectDelayMs = 500;
+  int _reconnectDelayMs = _kBaseReconnectDelayMs;
   Timer? _reconnectTimer;
 
   RealtimeChannelManager({required this.wsUrl, this.userJwt});
@@ -303,18 +310,32 @@ class RealtimeChannelManager {
         } catch (_) {}
       },
       onDone: () {
+        final code = _ws?.closeCode;
         _ws = null;
         _sub = null;
         for (final ch in _channels.values) {
           ch._setStatus(ChannelStatus.disconnected);
         }
+        // Stop reconnecting for normal/auth-failure closures.
+        if (code == 1000 || code == 1001 || code == 4001) {
+          _shouldReconnect = false;
+        }
         if (_shouldReconnect && _channels.isNotEmpty) {
+          // Rate-limited / policy closures → jump to long backoff floor.
+          if (code == _kWsCloseRateLimited || code == 1008 || code == 1013) {
+            if (_reconnectDelayMs < _kRateLimitedReconnectDelayMs) {
+              _reconnectDelayMs = _kRateLimitedReconnectDelayMs;
+            }
+          }
           _scheduleReconnect();
         }
       },
       onError: (_) {
         _ws = null;
         _sub = null;
+        for (final ch in _channels.values) {
+          ch._setStatus(ChannelStatus.error);
+        }
         if (_shouldReconnect && _channels.isNotEmpty) {
           _scheduleReconnect();
         }
@@ -331,12 +352,20 @@ class RealtimeChannelManager {
 
   void _scheduleReconnect() {
     _reconnectTimer?.cancel();
-    _reconnectTimer = Timer(Duration(milliseconds: _reconnectDelayMs), () {
-      _reconnectDelayMs = (_reconnectDelayMs * 2).clamp(0, 30000);
+    // Small jitter so many clients don't reconnect at the same ms.
+    final jitter = (DateTime.now().microsecondsSinceEpoch % 500);
+    final delay = (_reconnectDelayMs + jitter).clamp(0, _kMaxReconnectDelayMs);
+    _reconnectTimer = Timer(Duration(milliseconds: delay), () {
+      _reconnectDelayMs =
+          (_reconnectDelayMs * 2).clamp(0, _kMaxReconnectDelayMs);
       _ensureConnected().then((_) {
-        _reconnectDelayMs = 500; // reset on success
+        _reconnectDelayMs = _kBaseReconnectDelayMs; // reset on success
       }).catchError((_) {
-        _scheduleReconnect();
+        // Keep backing off; the next scheduled attempt already uses the
+        // doubled delay set above.
+        if (_shouldReconnect && _channels.isNotEmpty) {
+          _scheduleReconnect();
+        }
       });
     });
   }
