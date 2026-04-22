@@ -1,5 +1,4 @@
-﻿import 'package:dio/dio.dart';
-import 'package:flutter/foundation.dart';
+import 'package:dio/dio.dart';
 import '../../auth/services/token_manager.dart';
 
 /// Interceptor for handling authentication tokens
@@ -11,68 +10,47 @@ class AuthInterceptor extends Interceptor {
   @override
   Future<void> onRequest(RequestOptions options, RequestInterceptorHandler handler) async {
     try {
-      // Check if this is an auth endpoint that doesn't need tokens
+      // Auth endpoints don't need tokens
       if (_isAuthEndpoint(options.path)) {
-        debugPrint(' [AuthInterceptor] Auth endpoint, skipping token: ${options.path}');
         handler.next(options);
         return;
       }
 
-      // Check if this is a client/database endpoint
+      // Client/database endpoints prefer user token, fall back to API key
       if (_isClientEndpoint(options.path)) {
-        // For client endpoints, prefer user's access token for RLS enforcement
         final accessToken = await _tokenManager.getAccessToken();
         if (accessToken != null) {
-          debugPrint(' [AuthInterceptor] Client endpoint, using user token: ${options.path}');
           options.headers['Authorization'] = 'Bearer $accessToken';
-          // Also include API key as secondary header
           final apiKey = await _tokenManager.getApiKey();
           if (apiKey != null) {
             options.headers['apikey'] = apiKey;
           }
-          debugPrint(' [AuthInterceptor] Added user token + API key headers');
         } else {
-          // No user token available, fall back to API key only
-          debugPrint(' [AuthInterceptor] Client endpoint, using API key: ${options.path}');
           final apiKey = await _tokenManager.getApiKey();
-          debugPrint(' [AuthInterceptor] API key retrieved: ${apiKey != null ? "yes (${apiKey.substring(0, 50)}...)" : "no"}');
           if (apiKey != null) {
             options.headers['Authorization'] = 'Bearer $apiKey';
             options.headers['apikey'] = apiKey;
-            debugPrint(' [AuthInterceptor] Added API key header');
-          } else {
-            debugPrint(' [AuthInterceptor] No API key available');
           }
         }
         handler.next(options);
         return;
       }
 
-      // For other endpoints, use the user's access token
-      debugPrint(' [AuthInterceptor] Getting access token for: ${options.path}');
+      // Other endpoints: use user access token, fall back to API key
       final token = await _tokenManager.getAccessToken();
-      debugPrint(' [AuthInterceptor] Token retrieved: ${token != null ? "yes (${token.substring(0, 20)}...)" : "no"}');
-
       if (token != null) {
         options.headers['Authorization'] = 'Bearer $token';
-        debugPrint(' [AuthInterceptor] Added Authorization header');
-      }
-
-      // Add API key if available and no bearer token
-      if (token == null) {
-        debugPrint(' [AuthInterceptor] No token, trying API key...');
+      } else {
         final apiKey = await _tokenManager.getApiKey();
-        debugPrint(' [AuthInterceptor] API key retrieved: ${apiKey != null ? "yes" : "no"}');
         if (apiKey != null) {
           options.headers['apikey'] = apiKey;
           options.headers['Authorization'] = 'Bearer $apiKey';
-          debugPrint(' [AuthInterceptor] Added API key as Authorization header');
         }
       }
 
       handler.next(options);
-    } catch (e) {
-      debugPrint(' [AuthInterceptor] Error: $e');
+    } catch (_) {
+      // Best-effort — let the request through without auth headers
       handler.next(options);
     }
   }
@@ -85,14 +63,11 @@ class AuthInterceptor extends Interceptor {
 
       // If the error is due to invalid signature, try using API key instead
       if (errorMessage.contains('invalid signature')) {
-        debugPrint(' [AuthInterceptor] JWT has invalid signature, falling back to API key');
         try {
           final apiKey = await _tokenManager.getApiKey();
-          debugPrint(' [AuthInterceptor] Retrieved API key: ${apiKey != null ? "yes (${apiKey.substring(0, 20)}...)" : "no"}');
           if (apiKey != null) {
             err.requestOptions.headers['Authorization'] = 'Bearer $apiKey';
             err.requestOptions.headers['apikey'] = apiKey;
-            debugPrint(' [AuthInterceptor] Updated headers with API key');
 
             // Create a new Dio instance with the same base URL to avoid infinite loops
             final dio = Dio(BaseOptions(
@@ -111,12 +86,11 @@ class AuthInterceptor extends Interceptor {
               queryParameters: err.requestOptions.queryParameters,
             );
 
-            debugPrint(' [AuthInterceptor] Request succeeded with API key');
             handler.resolve(response);
             return;
           }
-        } catch (e) {
-          debugPrint(' [AuthInterceptor] API key fallback failed: $e');
+        } catch (_) {
+          // API key fallback failed — fall through to refresh attempt
         }
       }
 
@@ -150,7 +124,7 @@ class AuthInterceptor extends Interceptor {
             return;
           }
         }
-      } catch (e) {
+      } catch (_) {
         // Refresh failed, proceed with original error
       }
     }

@@ -1,6 +1,5 @@
 import 'package:dio/dio.dart';
 import '../../utils/retry_policy.dart';
-import '../../utils/logger.dart';
 
 /// Interceptor that adds automatic retry logic with exponential backoff
 class RetryInterceptor extends Interceptor {
@@ -17,7 +16,6 @@ class RetryInterceptor extends Interceptor {
   ) async {
     // Check if we should retry this error
     if (!_shouldRetry(err)) {
-      OrbitNestLogger.debug('Error not retryable: ${err.type}');
       return handler.next(err);
     }
 
@@ -25,16 +23,12 @@ class RetryInterceptor extends Interceptor {
     final retryCount = _getRetryCount(err.requestOptions);
 
     if (retryCount >= retryPolicy.maxRetries) {
-      OrbitNestLogger.debug('Max retries ($retryCount) reached');
       return handler.next(err);
     }
 
     try {
       // Calculate delay with exponential backoff
       final delay = _calculateDelay(retryCount);
-      OrbitNestLogger.debug(
-        'Retrying request (attempt ${retryCount + 1}/${retryPolicy.maxRetries}) after ${delay.inMilliseconds}ms',
-      );
 
       await Future.delayed(delay);
 
@@ -65,11 +59,8 @@ class RetryInterceptor extends Interceptor {
         ),
       );
 
-      OrbitNestLogger.debug('Retry successful');
       return handler.resolve(response);
     } catch (e) {
-      OrbitNestLogger.error('Retry failed', e);
-
       // If it's a DioException, pass it through for potential further retries
       if (e is DioException) {
         return handler.next(e);
