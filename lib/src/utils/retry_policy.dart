@@ -1,6 +1,5 @@
 import 'dart:math';
 import 'package:dio/dio.dart';
-import 'logger.dart';
 
 /// Retry policy for network requests with exponential backoff
 class RetryPolicy {
@@ -30,20 +29,15 @@ class RetryPolicy {
     while (true) {
       try {
         attempt++;
-        OrbitNestLogger.debug('Retry attempt $attempt/$maxRetries');
         return await fn();
       } catch (e) {
         // Check if we should retry
         if (!_shouldRetry(e, attempt)) {
-          OrbitNestLogger.debug('Not retrying: ${e.toString()}');
           rethrow;
         }
 
         // Calculate delay with exponential backoff and jitter
         final nextDelay = _calculateDelay(delay, attempt);
-        OrbitNestLogger.debug(
-          'Retry $attempt/$maxRetries failed, waiting ${nextDelay.inMilliseconds}ms before next attempt',
-        );
 
         await Future.delayed(nextDelay);
         delay = _nextDelay(delay);

@@ -38,7 +38,6 @@ class TokenManager {
     try {
       // Validate session before storing
       if (!_isValidSession(session)) {
-        OrbitNestLogger.warning('Attempted to store invalid session');
         throw Exception('Invalid session data');
       }
 
@@ -74,8 +73,6 @@ class TokenManager {
       // Cache tokens in memory for faster access
       _cachedAccessToken = session.accessToken;
       _cachedRefreshToken = session.refreshToken;
-
-      OrbitNestLogger.debug('Session stored securely');
     } catch (e) {
       OrbitNestLogger.error('Failed to store session', e);
       throw Exception('Failed to store session: $e');
@@ -100,9 +97,6 @@ class TokenManager {
       if (storedChecksum != null) {
         final currentChecksum = _generateChecksum(sessionJson);
         if (storedChecksum != currentChecksum) {
-          OrbitNestLogger.warning(
-            'Session integrity check failed - clearing session',
-          );
           await clearSession();
           return null;
         }
@@ -118,7 +112,6 @@ class TokenManager {
       // Only clear session if refresh token is also invalid/missing
       // This allows the AuthBloc to attempt a refresh if access token is expired
       if (session.refreshToken.isEmpty) {
-        OrbitNestLogger.debug('No refresh token available - clearing session');
         await clearSession();
         return null;
       }
@@ -127,15 +120,11 @@ class TokenManager {
       try {
         if (session.refreshToken.isNotEmpty &&
             isTokenExpired(session.refreshToken)) {
-          OrbitNestLogger.debug('Refresh token expired - clearing session');
           await clearSession();
           return null;
         }
       } catch (e) {
         // If we can't decode the refresh token, don't clear - let the server validate
-        OrbitNestLogger.debug(
-          'Could not validate refresh token expiry, proceeding',
-        );
       }
 
       return session;
@@ -311,12 +300,10 @@ class TokenManager {
   /// instead of firing a second HTTP request.
   Future<bool> refreshSession() async {
     if (_refreshCallback == null) {
-      OrbitNestLogger.warning('Refresh callback not set, cannot refresh session');
       return false;
     }
 
     if (_pendingRefresh != null) {
-      OrbitNestLogger.debug('Token refresh already in progress, awaiting existing request');
       return _pendingRefresh!;
     }
 
@@ -361,13 +348,11 @@ class TokenManager {
   Future<void> clearAll() async {
     try {
       await _secureStorage.deleteAll();
-      OrbitNestLogger.debug('All secure storage cleared');
-      
+
       // Clear cached tokens
       _cachedAccessToken = null;
       _cachedRefreshToken = null;
     } catch (e) {
-      OrbitNestLogger.warning('Error clearing storage', e);
       // Ignore errors when clearing all
     }
   }
@@ -389,27 +374,23 @@ class TokenManager {
 
       // Check if access token is expired
       if (isTokenExpired(session.accessToken)) {
-        OrbitNestLogger.debug('Access token is expired');
         return false;
       }
 
       // Check if refresh token exists and is valid
       if (session.refreshToken.isNotEmpty &&
           isTokenExpired(session.refreshToken)) {
-        OrbitNestLogger.debug('Refresh token is expired');
         return false;
       }
 
       // Check if session is within acceptable age limit
       final tokenAge = _getTokenAge(session.accessToken);
       if (tokenAge != null && tokenAge.inHours > _maxTokenAge) {
-        OrbitNestLogger.debug('Token exceeds maximum age');
         return false;
       }
 
       return true;
     } catch (e) {
-      OrbitNestLogger.warning('Session validation failed', e);
       return false;
     }
   }
