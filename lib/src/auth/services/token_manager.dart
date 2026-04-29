@@ -79,8 +79,11 @@ class TokenManager {
     }
   }
 
-  /// Retrieve stored session with integrity verification
-  /// Note: This returns sessions even if access token is expired, to allow refresh
+  /// Retrieve stored session with integrity verification.
+  /// Returns the session (even with an expired access token) so the caller can
+  /// attempt a server-side refresh. Only returns null when there is genuinely
+  /// no session to restore (never-signed-in, explicit sign-out, or a truly
+  /// unrecoverable storage state).
   Future<Session?> getStoredSession() async {
     try {
       final sessionJson = await _secureStorage.read(
@@ -89,16 +92,22 @@ class TokenManager {
 
       if (sessionJson == null) return null;
 
-      // Verify session integrity
+      // Integrity check — a mismatch most likely means storage corruption, not
+      // tampering. Log a warning but continue so the server can validate the
+      // refresh token via /auth/refresh. Wiping here would silently log users
+      // out on any secure-storage write anomaly.
       final storedChecksum = await _secureStorage.read(
         key: '${OrbitNestConstants.sessionKey}_checksum',
       );
-
       if (storedChecksum != null) {
         final currentChecksum = _generateChecksum(sessionJson);
         if (storedChecksum != currentChecksum) {
-          await clearSession();
-          return null;
+          OrbitNestLogger.error(
+            'getStoredSession: checksum mismatch — storage may be corrupt; '
+            'proceeding to allow server-side refresh',
+            null,
+          );
+          // Do NOT wipe — let /auth/refresh be the authority.
         }
       }
 
@@ -109,29 +118,25 @@ class TokenManager {
       _cachedAccessToken = session.accessToken;
       _cachedRefreshToken = session.refreshToken;
 
-      // Only clear session if refresh token is also invalid/missing
-      // This allows the AuthBloc to attempt a refresh if access token is expired
+      // Without a refresh token there is nothing to recover with.
       if (session.refreshToken.isEmpty) {
+        OrbitNestLogger.error('getStoredSession: empty refresh token — clearing session', null);
         await clearSession();
         return null;
       }
 
-      // Check if refresh token is expired (if we can decode it)
-      try {
-        if (session.refreshToken.isNotEmpty &&
-            isTokenExpired(session.refreshToken)) {
-          await clearSession();
-          return null;
-        }
-      } catch (e) {
-        // If we can't decode the refresh token, don't clear - let the server validate
-      }
+      // Do NOT check refresh-token expiry client-side. The exp claim in a JWT
+      // is a hint, not a contract: clock skew, token rotation policies, and
+      // server-side session extension can all make a locally-"expired" token
+      // still valid. Let the server reject /auth/refresh if the token is truly
+      // dead — only then should the session be cleared.
 
       return session;
     } catch (e) {
-      OrbitNestLogger.error('Failed to retrieve session', e);
-      // If there's an error reading the session, clear it for security
-      await clearSession();
+      // Transient errors (e.g. iOS secure storage initialising, disk pressure)
+      // should not permanently log the user out. Log and return null so the
+      // next attempt can succeed.
+      OrbitNestLogger.error('getStoredSession: failed to read/decode session', e);
       return null;
     }
   }
@@ -364,30 +369,16 @@ class TokenManager {
     return digest.toString();
   }
 
-  /// Validate session data integrity and expiration
+  /// Validate that a freshly-received session (from sign-in or token refresh)
+  /// is safe to persist. Only the access token is checked — the refresh token
+  /// expiry is the server's concern, not the client's.
   bool _isValidSession(Session session) {
     try {
-      // Check if required fields are present
-      if (session.accessToken.isEmpty) {
-        return false;
-      }
+      if (session.accessToken.isEmpty) return false;
+      if (isTokenExpired(session.accessToken)) return false;
 
-      // Check if access token is expired
-      if (isTokenExpired(session.accessToken)) {
-        return false;
-      }
-
-      // Check if refresh token exists and is valid
-      if (session.refreshToken.isNotEmpty &&
-          isTokenExpired(session.refreshToken)) {
-        return false;
-      }
-
-      // Check if session is within acceptable age limit
       final tokenAge = _getTokenAge(session.accessToken);
-      if (tokenAge != null && tokenAge.inHours > _maxTokenAge) {
-        return false;
-      }
+      if (tokenAge != null && tokenAge.inHours > _maxTokenAge) return false;
 
       return true;
     } catch (e) {
