@@ -93,6 +93,9 @@ class OrbitNestClient {
       projectSlug: _projectSlug,
       apiKey: _anonKey,
     );
+    // Persist anonKey to secure storage so getApiKey()'s storage-fallback path
+    // also returns it (e.g. if TokenManager is ever reconstructed without apiKey).
+    _tokenManager.storeApiKey(_anonKey).ignore();
 
     // Initialize HTTP client
     _httpClient = OrbitNestHttpClient(

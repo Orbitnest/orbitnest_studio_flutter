@@ -16,22 +16,22 @@ class AuthInterceptor extends Interceptor {
         return;
       }
 
-      // Client/database endpoints prefer user token, fall back to API key
+      // Client/database endpoints: apikey must always be present for PostgREST,
+      // regardless of whether there is an authenticated user.
       if (_isClientEndpoint(options.path)) {
+        final apiKey = await _tokenManager.getApiKey();
+        if (apiKey != null) {
+          options.headers['apikey'] = apiKey;
+        }
+
         final accessToken = await _tokenManager.getAccessToken();
         if (accessToken != null) {
           options.headers['Authorization'] = 'Bearer $accessToken';
-          final apiKey = await _tokenManager.getApiKey();
-          if (apiKey != null) {
-            options.headers['apikey'] = apiKey;
-          }
-        } else {
-          final apiKey = await _tokenManager.getApiKey();
-          if (apiKey != null) {
-            options.headers['Authorization'] = 'Bearer $apiKey';
-            options.headers['apikey'] = apiKey;
-          }
+        } else if (apiKey != null) {
+          // Unauthenticated client request: anon key serves as the bearer.
+          options.headers['Authorization'] = 'Bearer $apiKey';
         }
+
         handler.next(options);
         return;
       }
@@ -98,10 +98,17 @@ class AuthInterceptor extends Interceptor {
       try {
         final refreshed = await _tokenManager.refreshSession();
         if (refreshed) {
-          // Retry the original request with the new token
+          // Retry the original request with the refreshed token.
+          // Re-apply both Authorization and apikey so the retry is fully
+          // authenticated — the apikey header must always be present for
+          // PostgREST endpoints even after a token refresh.
           final token = await _tokenManager.getAccessToken();
+          final apiKey = await _tokenManager.getApiKey();
           if (token != null) {
             err.requestOptions.headers['Authorization'] = 'Bearer $token';
+            if (apiKey != null) {
+              err.requestOptions.headers['apikey'] = apiKey;
+            }
 
             // Create a new Dio instance with the same base URL to avoid infinite loops
             final dio = Dio(BaseOptions(
