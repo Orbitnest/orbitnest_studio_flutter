@@ -127,12 +127,18 @@ class OrbitNestAuth extends ChangeNotifier {
     return completer.future;
   }
 
-  /// Get current user (null if not authenticated)
+  /// Get current user (null only when explicitly unauthenticated).
+  ///
+  /// Transient states (AuthPasskeysListedState, AuthLoadingState, etc.) do
+  /// NOT clear the user — they fall back to [_lastKnownSession]?.user so
+  /// callers always see the authenticated user while background operations
+  /// are in flight.
   User? get currentUser {
     return switch (_currentState) {
       AuthAuthenticatedState(:final user) => user,
       AuthUserUpdatedState(:final user) => user,
-      _ => null,
+      AuthUnauthenticatedState() => null,
+      _ => _lastKnownSession?.user,
     };
   }
 
@@ -145,17 +151,21 @@ class OrbitNestAuth extends ChangeNotifier {
   Session? get currentSession {
     return switch (_currentState) {
       AuthAuthenticatedState(:final session) => session,
-      AuthUnauthenticatedState() => null, // explicitly signed out
-      _ => _lastKnownSession,            // any transient state → use cached session
+      AuthUnauthenticatedState() => null,
+      _ => _lastKnownSession,
     };
   }
 
-  /// Check if user is currently authenticated
+  /// Check if user is currently authenticated.
+  ///
+  /// Transient states do NOT clear authentication — only an explicit
+  /// [AuthUnauthenticatedState] means the user has signed out.
   bool get isAuthenticated {
     return switch (_currentState) {
       AuthAuthenticatedState() => true,
       AuthUserUpdatedState() => true,
-      _ => false,
+      AuthUnauthenticatedState() => false,
+      _ => _lastKnownSession != null,
     };
   }
 
