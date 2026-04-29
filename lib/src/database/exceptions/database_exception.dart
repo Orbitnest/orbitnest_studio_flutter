@@ -1,3 +1,4 @@
+import 'package:dio/dio.dart';
 import '../../client/interceptors/error_interceptor.dart';
 
 /// Database-specific exception
@@ -27,6 +28,27 @@ class DatabaseException extends OrbitNestException {
         error.message,
         code: error.code,
         statusCode: error.statusCode,
+      );
+    }
+
+    // Dio wraps OrbitNestException inside DioException.error after ErrorInterceptor.
+    // Unwrap it so the caller sees the real code (e.g. UNAUTHORIZED) instead of
+    // UNKNOWN_DATABASE_ERROR.
+    if (error is DioException) {
+      final inner = error.error;
+      if (inner is OrbitNestException) {
+        return DatabaseException(
+          inner.message,
+          code: inner.code,
+          statusCode: inner.statusCode ?? error.response?.statusCode,
+        );
+      }
+      final msg = error.message ?? error.toString();
+      final status = error.response?.statusCode;
+      return DatabaseException(
+        msg,
+        code: status == 401 ? 'UNAUTHORIZED' : 'UNKNOWN_DATABASE_ERROR',
+        statusCode: status,
       );
     }
 
