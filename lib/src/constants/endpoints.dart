@@ -27,7 +27,7 @@ class Endpoints {
   static String projectApiKeys(String id) => '/api/projects/$id/api-keys';
   static String deleteProjectApiKey(String projectId, String keyId) =>
       '/api/projects/$projectId/api-keys/$keyId';
-  static const String projectDecryptionKey = '/api/projects/decryption-key';
+  static String projectDecryptionKey(String projectId) => '/api/projects/$projectId/api-keys/decrypted';
 
   // Project API Key Authentication
   static String projectInfo(String slug) => '/api/project/$slug/info';

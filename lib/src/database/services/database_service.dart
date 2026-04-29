@@ -58,10 +58,15 @@ class DatabaseService {
   Future<TableSchema> getTableSchema(String tableName) async {
     try {
       final response = await _httpClient.get(
-        '${Endpoints.projectDatabaseTables(_projectSlug)}/$tableName/schema',
+        Endpoints.projectDatabaseTables(_projectSlug),
+        queryParameters: {'table': tableName},
       );
-
-      return TableSchema.fromJson(response.data);
+      final List<dynamic> items =
+          response.data is List ? response.data as List : [response.data];
+      if (items.isEmpty) {
+        throw DatabaseException('Table not found: $tableName');
+      }
+      return TableSchema.fromJson(items.first as Map<String, dynamic>);
     } catch (e) {
       throw DatabaseException.fromException(e);
     }
@@ -239,34 +244,27 @@ class DatabaseService {
     }
   }
 
-  /// Update data
+  /// Update data.
+  /// Routes through the bulk-update endpoint (`PUT /rows/bulk`) because the
+  /// single-row endpoint requires an explicit row ID that isn't available here.
+  /// Filters like ['id=123', 'status=active'] are parsed into a `where` map.
   Future<PostgrestResponse<Map<String, dynamic>>> update({
     required String table,
     required Map<String, dynamic> values,
     List<String>? filters,
   }) async {
     try {
-      final queryParams = <String, dynamic>{};
-
-      if (filters != null && filters.isNotEmpty) {
-        for (final filter in filters) {
-          final parts = filter.split('=');
-          if (parts.length == 2) {
-            queryParams[parts[0]] = parts[1];
-          }
-        }
-      }
-
+      final whereMap = _parseFiltersToMap(filters);
       final response = await _httpClient.put(
-        Endpoints.projectDatabaseTableRows(_projectSlug, table),
-        data: values,
-        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+        Endpoints.projectDatabaseTableBulkUpdate(_projectSlug, table),
+        data: [
+          {'where': whereMap, 'data': values}
+        ],
       );
-
+      final List<dynamic> resultList =
+          response.data is List ? response.data as List : [];
       return PostgrestResponse<Map<String, dynamic>>(
-        data: response.data is List
-            ? List<Map<String, dynamic>>.from(response.data)
-            : [Map<String, dynamic>.from(response.data ?? {})],
+        data: resultList.whereType<Map<String, dynamic>>().toList(),
         status: response.statusCode,
       );
     } catch (e) {
@@ -274,28 +272,19 @@ class DatabaseService {
     }
   }
 
-  /// Delete data
+  /// Delete data.
+  /// Routes through the bulk-delete endpoint (`DELETE /rows/bulk`) because the
+  /// single-row endpoint requires an explicit row ID that isn't available here.
   Future<PostgrestResponse<Map<String, dynamic>>> delete({
     required String table,
     List<String>? filters,
   }) async {
     try {
-      final queryParams = <String, dynamic>{};
-
-      if (filters != null && filters.isNotEmpty) {
-        for (final filter in filters) {
-          final parts = filter.split('=');
-          if (parts.length == 2) {
-            queryParams[parts[0]] = parts[1];
-          }
-        }
-      }
-
+      final conditions = _parseFiltersToMap(filters);
       final response = await _httpClient.delete(
-        Endpoints.projectDatabaseTableRows(_projectSlug, table),
-        queryParameters: queryParams.isNotEmpty ? queryParams : null,
+        Endpoints.projectDatabaseTableBulkDelete(_projectSlug, table),
+        data: [conditions],
       );
-
       return PostgrestResponse<Map<String, dynamic>>(
         data: [],
         status: response.statusCode,
@@ -305,7 +294,9 @@ class DatabaseService {
     }
   }
 
-  /// Bulk insert
+  /// Bulk insert.
+  /// Sends the rows array directly — the backend expects `Record<string,any>[]`,
+  /// not the previously wrapped `{ rows: [...] }` shape.
   Future<int> bulkInsert({
     required String table,
     required List<Map<String, dynamic>> values,
@@ -316,59 +307,78 @@ class DatabaseService {
     try {
       final response = await _httpClient.post(
         Endpoints.projectDatabaseTableBulkInsert(_projectSlug, table),
-        data: {'rows': values},
+        data: values,
         queryParameters: {
           if (upsert) 'upsert': 'true',
           if (onConflict != null) 'on_conflict': onConflict,
           if (ignoreDuplicates) 'ignore_duplicates': 'true',
         },
       );
-
-      return response.data['count'] ?? values.length;
+      final dynamic count = response.data is Map ? response.data['count'] : null;
+      return (count as int?) ?? values.length;
     } catch (e) {
       throw DatabaseException.fromException(e);
     }
   }
 
-  /// Bulk update
+  /// Bulk update.
+  /// Converts `(values, matchColumn)` into the `[{where, data}]` shape the
+  /// backend expects. Each row's `matchColumn` key becomes the `where` filter
+  /// and the remaining keys become `data`.
   Future<int> bulkUpdate({
     required String table,
     required List<Map<String, dynamic>> values,
     required String matchColumn,
   }) async {
     try {
+      final updates = values.map((row) {
+        final data = Map<String, dynamic>.from(row)..remove(matchColumn);
+        return {'where': {matchColumn: row[matchColumn]}, 'data': data};
+      }).toList();
+
       final response = await _httpClient.put(
         Endpoints.projectDatabaseTableBulkUpdate(_projectSlug, table),
-        data: {
-          'rows': values,
-          'match_column': matchColumn,
-        },
+        data: updates,
       );
-
-      return response.data['count'] ?? values.length;
+      final dynamic count = response.data is Map ? response.data['count'] : null;
+      return (count as int?) ?? values.length;
     } catch (e) {
       throw DatabaseException.fromException(e);
     }
   }
 
-  /// Bulk delete
+  /// Bulk delete.
+  /// Converts `(ids, idColumn)` into the `[{idColumn: id}, ...]` conditions
+  /// array the backend expects (previously sent `{ids, id_column}` object).
   Future<int> bulkDelete({
     required String table,
     required List<dynamic> ids,
     String idColumn = 'id',
   }) async {
     try {
+      final conditions = ids.map((id) => {idColumn: id}).toList();
       final response = await _httpClient.delete(
         Endpoints.projectDatabaseTableBulkDelete(_projectSlug, table),
-        data: {
-          'ids': ids,
-          'id_column': idColumn,
-        },
+        data: conditions,
       );
-
-      return response.data['count'] ?? ids.length;
+      final dynamic count = response.data is Map ? response.data['count'] : null;
+      return (count as int?) ?? ids.length;
     } catch (e) {
       throw DatabaseException.fromException(e);
     }
+  }
+
+  /// Parses PostgREST-style filter strings (`['col=val', ...]`) into a map
+  /// suitable for use as a `where` condition body.
+  Map<String, dynamic> _parseFiltersToMap(List<String>? filters) {
+    if (filters == null || filters.isEmpty) return {};
+    final result = <String, dynamic>{};
+    for (final f in filters) {
+      final idx = f.indexOf('=');
+      if (idx > 0) {
+        result[f.substring(0, idx)] = f.substring(idx + 1);
+      }
+    }
+    return result;
   }
 }
