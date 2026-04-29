@@ -235,8 +235,22 @@ class DatabaseService {
         },
       );
 
+      // Backend wraps the result: {success, rows_affected, message, data: [...rows]}
+      // Extract the actual inserted rows so callers get server-generated fields (id, timestamps, etc.)
+      final dynamic responseData = response.data;
+      final List<dynamic> rows;
+      if (responseData is Map<String, dynamic> && responseData.containsKey('data')) {
+        rows = responseData['data'] as List<dynamic>;
+      } else if (responseData is List) {
+        rows = responseData;
+      } else if (responseData is Map<String, dynamic>) {
+        rows = [responseData];
+      } else {
+        rows = [];
+      }
+
       return PostgrestResponse<Map<String, dynamic>>(
-        data: [Map<String, dynamic>.from(response.data ?? {})],
+        data: rows.whereType<Map<String, dynamic>>().toList(),
         status: response.statusCode,
       );
     } catch (e) {
