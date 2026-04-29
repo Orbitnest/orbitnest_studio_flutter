@@ -472,14 +472,11 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       );
 
       if (accessTokenExpired || accessTokenExpiringSoon) {
-        // Try to refresh the session asynchronously
+        // Emit the stored user immediately so currentUser is never null during
+        // init. The AuthInterceptor handles 401→refresh→retry on any API call,
+        // so callers are unblocked even though the token is stale.
+        emit(AuthAuthenticatedState(user: session.user, session: session));
         add(AuthRefreshSessionEvent(refreshToken: session.refreshToken));
-
-        // Still emit authenticated state with current session while refresh is in progress
-        // The refresh will update the session when complete
-        if (!accessTokenExpired) {
-          emit(AuthAuthenticatedState(user: session.user, session: session));
-        }
         return;
       }
 
