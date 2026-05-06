@@ -27,6 +27,9 @@ class TokenManager {
   // Cache tokens in memory for faster access
   String? _cachedAccessToken;
   String? _cachedRefreshToken;
+  // Guards against re-entrant proactive refresh: the refresh HTTP call itself
+  // goes through onRequest → getAccessToken, and we must not recurse.
+  bool _isRefreshing = false;
 
 
   TokenManager({String? projectSlug, String? apiKey})
@@ -159,6 +162,26 @@ class TokenManager {
       if (token != null && !isTokenExpired(token)) {
         _cachedAccessToken = token;
         return token;
+      }
+      // Both expired: refresh proactively so callers get a valid token without
+      // waiting for a 401, which the server often embeds in a 200 body (meaning
+      // onError never fires and the anon key gets sent as Bearer instead).
+      // _isRefreshing breaks the re-entrancy loop: the refresh HTTP call itself
+      // goes through onRequest → getAccessToken, and must not recurse here.
+      if (!_isRefreshing && _refreshCallback != null) {
+        _isRefreshing = true;
+        try {
+          final refreshed = await refreshSession();
+          if (refreshed) {
+            final newToken = await _secureStorage.read(key: OrbitNestConstants.accessTokenKey);
+            if (newToken != null && !isTokenExpired(newToken)) {
+              _cachedAccessToken = newToken;
+              return newToken;
+            }
+          }
+        } finally {
+          _isRefreshing = false;
+        }
       }
       return null;
     } catch (e) {
