@@ -288,10 +288,22 @@ class OrbitNestAuth extends ChangeNotifier {
   /// Refresh current session
   /// Returns user and session when successful
   Future<Map<String, dynamic>> refreshSession() async {
-    return await _executeWithCompleter<Map<String, dynamic>>(
+    final result = await _executeWithCompleter<Map<String, dynamic>>(
       'auth_success',
       const AuthRefreshSessionEvent(),
     );
+    // Update this TokenManager's in-memory cache directly after a successful
+    // refresh. The AuthBloc's own storeSession() call may have targeted a
+    // different TokenManager instance (custom DI setups where AuthBloc and
+    // OrbitNestAuth are wired separately), so we call it here too — idempotent
+    // when they share the same instance.
+    try {
+      final raw = result['session'];
+      if (raw is Map<String, dynamic>) {
+        await _tokenManager.storeSession(Session.fromJson(raw));
+      }
+    } catch (_) {}
+    return result;
   }
 
   /// Sign out current user
