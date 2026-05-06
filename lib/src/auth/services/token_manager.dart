@@ -141,19 +141,26 @@ class TokenManager {
     }
   }
 
-  /// Get current access token
+  /// Get current access token.
+  /// Returns null (rather than an expired token) so callers that need a valid
+  /// token either fail fast or trigger the 401 → onError refresh flow instead
+  /// of sending a token the backend will reject with "invalid signature" / expired.
   Future<String?> getAccessToken() async {
     try {
-      // Return cached token if available
+      // Return cached token only if it has not expired yet.
       if (_cachedAccessToken != null) {
-        return _cachedAccessToken;
+        if (!isTokenExpired(_cachedAccessToken!)) {
+          return _cachedAccessToken;
+        }
+        _cachedAccessToken = null;
       }
-      // Otherwise read from secure storage and cache it
+      // Fall through to secure storage — maybe a refresh already wrote a new one.
       final token = await _secureStorage.read(key: OrbitNestConstants.accessTokenKey);
-      if (token != null) {
+      if (token != null && !isTokenExpired(token)) {
         _cachedAccessToken = token;
+        return token;
       }
-      return token;
+      return null;
     } catch (e) {
       return null;
     }

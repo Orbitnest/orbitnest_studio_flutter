@@ -158,13 +158,13 @@ class AuthInterceptor extends Interceptor {
   }
 
   /// Check if this is a client endpoint that requires authentication
-  /// These are endpoints like /api/project/:slug/database/* or /api/project/:slug/functions/*
+  /// These are endpoints like /api/project/:slug/database/*, /api/project/:slug/functions/*, or /api/project/:slug/storage/*
   bool _isClientEndpoint(String path) {
-    // Client endpoints pattern: /api/project/:slug/database/* or /api/project/:slug/functions/*
     final isClientPath = path.contains('/api/project/');
     final isDatabase = path.contains('/database/');
     final isFunction = path.contains('/functions/');
+    final isStorage = path.contains('/storage/');
 
-    return isClientPath && (isDatabase || isFunction);
+    return isClientPath && (isDatabase || isFunction || isStorage);
   }
 }
