@@ -22,7 +22,6 @@ class TokenManager {
 
   final String? _projectSlug;
   final String? _apiKey;
-  static const int _maxTokenAge = 24; // hours
   static const int _refreshThresholdMinutes = 5;
   // Cache tokens in memory for faster access
   String? _cachedAccessToken;
@@ -36,22 +35,23 @@ class TokenManager {
     : _projectSlug = projectSlug,
       _apiKey = apiKey;
 
-  /// Store session securely with additional validation
+  /// Store session securely.
   Future<void> storeSession(Session session) async {
+    if (session.accessToken.isEmpty) {
+      OrbitNestLogger.error('storeSession: empty access token, skipping', null);
+      return;
+    }
+
+    // Update in-memory cache immediately — the next outbound request needs the
+    // token now, before the secure-storage round-trip completes.  Doing this
+    // first also means a transient storage failure (e.g. iOS keychain briefly
+    // locked on app resume) never causes getAccessToken() to return null for a
+    // session the server just confirmed as valid.
+    _cachedAccessToken = session.accessToken;
+    _cachedRefreshToken = session.refreshToken;
+
     try {
-      // Validate session before storing
-      if (!_isValidSession(session)) {
-        throw Exception('Invalid session data');
-      }
-
-      // Add session timestamp for tracking
-      final sessionWithTimestamp = session.copyWith(
-        // Store when this session was saved locally
-      );
-
-      final sessionJson = json.encode(sessionWithTimestamp.toJson());
-
-      // Generate a session checksum for integrity verification
+      final sessionJson = json.encode(session.toJson());
       final checksum = _generateChecksum(sessionJson);
 
       await Future.wait([
@@ -72,13 +72,10 @@ class TokenManager {
           value: session.refreshToken,
         ),
       ]);
-      
-      // Cache tokens in memory for faster access
-      _cachedAccessToken = session.accessToken;
-      _cachedRefreshToken = session.refreshToken;
     } catch (e) {
-      OrbitNestLogger.error('Failed to store session', e);
-      throw Exception('Failed to store session: $e');
+      OrbitNestLogger.error('Failed to persist session to storage', e);
+      // Do not re-throw.  In-memory cache is already updated, so the current
+      // session remains usable.  The next app restart will re-run /auth/refresh.
     }
   }
 
@@ -397,37 +394,6 @@ class TokenManager {
     final bytes = utf8.encode(data);
     final digest = sha256.convert(bytes);
     return digest.toString();
-  }
-
-  /// Validate that a freshly-received session (from sign-in or token refresh)
-  /// is safe to persist. Only the access token is checked — the refresh token
-  /// expiry is the server's concern, not the client's.
-  bool _isValidSession(Session session) {
-    try {
-      if (session.accessToken.isEmpty) return false;
-      if (isTokenExpired(session.accessToken)) return false;
-
-      final tokenAge = _getTokenAge(session.accessToken);
-      if (tokenAge != null && tokenAge.inHours > _maxTokenAge) return false;
-
-      return true;
-    } catch (e) {
-      return false;
-    }
-  }
-
-  /// Get token age from issued time
-  Duration? _getTokenAge(String token) {
-    try {
-      final payload = JwtDecoder.decode(token);
-      final iat = payload['iat'] as int?;
-      if (iat == null) return null;
-
-      final issuedAt = DateTime.fromMillisecondsSinceEpoch(iat * 1000);
-      return DateTime.now().difference(issuedAt);
-    } catch (e) {
-      return null;
-    }
   }
 
   /// Check if token is about to expire and needs refresh
