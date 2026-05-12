@@ -350,12 +350,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       // Persist updated user into stored session so it survives app restarts.
       // Without this, _onInitialize would restore the stale user (without
       // display_name) on next launch.
+      Session? updatedSession;
       try {
         final currentSession = await _tokenManager.getStoredSession();
         if (currentSession != null) {
-          await _tokenManager.storeSession(
-            currentSession.copyWith(user: response.user),
-          );
+          updatedSession = currentSession.copyWith(user: response.user);
+          await _tokenManager.storeSession(updatedSession);
         }
       } catch (sessionError) {
         // Non-fatal – user is updated in memory even if storage fails
@@ -364,6 +364,21 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
       emit(
         AuthUserUpdatedState(user: response.user, message: response.message),
       );
+
+      // Re-emit AuthAuthenticatedState with the refreshed user so the
+      // long-lived bloc state reflects the new profile. Without this,
+      // consumers that filter for AuthAuthenticatedState (or rely on
+      // OrbitNestAuth._lastKnownSession, which is only refreshed on
+      // AuthAuthenticatedState) keep showing the stale user once any
+      // subsequent transient state fires.
+      if (updatedSession != null) {
+        emit(
+          AuthAuthenticatedState(
+            user: response.user,
+            session: updatedSession,
+          ),
+        );
+      }
     } catch (e) {
       emit(
         AuthErrorState(message: _getErrorMessage(e), code: _getErrorCode(e)),
