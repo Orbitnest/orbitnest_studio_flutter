@@ -1,3 +1,5 @@
+import '../analytics/orbitnest_analytics.dart';
+import '../analytics/services/analytics_service.dart';
 import '../auth/bloc/auth_bloc.dart';
 import '../auth/repositories/auth_repository.dart';
 import '../auth/services/auth_service.dart';
@@ -31,6 +33,7 @@ class OrbitNestClient {
   late final DatabaseService _databaseService;
   late final FunctionsService _functionsService;
   late final JobsService _jobsService;
+  late final AnalyticsService _analyticsService;
 
   // Repositories
   late final AuthRepository _authRepository;
@@ -47,6 +50,7 @@ class OrbitNestClient {
   late final OrbitNestDatabase _database;
   late final OrbitNestFunctions _functions;
   late final OrbitNestRealtime _realtime;
+  late final OrbitNestAnalytics _analytics;
 
   OrbitNestClient._({
     required String baseUrl,
@@ -124,6 +128,12 @@ class OrbitNestClient {
       projectSlug: _projectSlug,
     );
 
+    _analyticsService = AnalyticsService(
+      httpClient: _httpClient,
+      baseUrl: _baseUrl,
+    );
+    _analytics = OrbitNestAnalytics(_analyticsService);
+
     // Initialize repositories
     _authRepository = AuthRepository(authService: _authService);
     _databaseRepository = DatabaseRepository(databaseService: _databaseService);
@@ -176,6 +186,9 @@ class OrbitNestClient {
 
   /// Get the background jobs API (admin only)
   JobsService get jobs => _jobsService;
+
+  /// Get the analytics API — track events, screens, crashes, and user identity.
+  OrbitNestAnalytics get analytics => _analytics;
 
   // ============================
   // Direct Function Methods (Supabase-style API)
@@ -329,6 +342,7 @@ class OrbitNestClient {
     _database.dispose();
     _functions.dispose();
     _realtime.dispose();
+    _analyticsService.dispose();
     _authBloc.close();
     _databaseBloc.close();
     _functionsBloc.close();
