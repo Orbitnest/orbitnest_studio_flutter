@@ -288,6 +288,12 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
   ) async {
     emit(const AuthLoadingState());
 
+    // Bypass proactive token refresh for the duration of sign-out. Otherwise
+    // the /auth/signout request's interceptor would trigger a refresh that
+    // enqueues an event on this (single-threaded) bloc while it is still
+    // awaiting signOut() — a deadlock that strands the UI on AuthLoadingState.
+    _tokenManager.markSigningOut();
+
     try {
       await _authRepository.signOut();
       await _tokenManager.clearSession();
