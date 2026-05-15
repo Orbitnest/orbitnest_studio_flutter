@@ -161,12 +161,21 @@ class AuthService {
     }
   }
 
-  /// Sign out the current user
+  /// Sign out the current user.
+  ///
+  /// Server-side session invalidation is best-effort: it is capped at a short
+  /// timeout so logout stays responsive on slow/unstable networks. The caller
+  /// clears the local session regardless of the outcome, so the user is logged
+  /// out even if this request times out or fails — swallowing the error here
+  /// keeps that the responsibility of the caller without surfacing a failure
+  /// for an operation that does not block logout.
   Future<void> signOut() async {
     try {
-      await _httpClient.post(Endpoints.projectSignout(_projectSlug));
-    } catch (e) {
-      throw AuthException.fromException(e);
+      await _httpClient
+          .post(Endpoints.projectSignout(_projectSlug))
+          .timeout(const Duration(seconds: 5));
+    } catch (_) {
+      // Ignore — local session will be cleared by the caller regardless.
     }
   }
 
