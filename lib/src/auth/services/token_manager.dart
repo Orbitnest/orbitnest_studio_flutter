@@ -29,6 +29,11 @@ class TokenManager {
   // Guards against re-entrant proactive refresh: the refresh HTTP call itself
   // goes through onRequest → getAccessToken, and we must not recurse.
   bool _isRefreshing = false;
+  // Set while a sign-out is in flight. The /auth/signout request goes through
+  // onRequest → getAccessToken; if the token is expired a proactive refresh
+  // would add an event to the AuthBloc that is already blocked processing the
+  // sign-out — a deadlock. While signing out we skip the refresh entirely.
+  bool _isSigningOut = false;
 
 
   TokenManager({String? projectSlug, String? apiKey})
@@ -147,6 +152,11 @@ class TokenManager {
   /// of sending a token the backend will reject with "invalid signature" / expired.
   Future<String?> getAccessToken() async {
     try {
+      // During sign-out, never trigger a refresh: it would enqueue an event on
+      // the AuthBloc that is already blocked awaiting this very request,
+      // deadlocking logout. Return the cached token as-is (even if expired) so
+      // the /auth/signout call can still proceed.
+      if (_isSigningOut) return _cachedAccessToken;
       // Return cached token only if it has not expired yet.
       if (_cachedAccessToken != null) {
         if (!isTokenExpired(_cachedAccessToken!)) {
@@ -227,6 +237,11 @@ class TokenManager {
     }
   }
 
+  /// Mark that a sign-out is in progress so getAccessToken() skips the
+  /// proactive refresh that would otherwise deadlock against the AuthBloc.
+  /// Cleared automatically by clearSession() once sign-out completes.
+  void markSigningOut() => _isSigningOut = true;
+
   /// Clear all stored authentication data
   Future<void> clearSession() async {
     try {
@@ -235,12 +250,15 @@ class TokenManager {
         _secureStorage.delete(key: OrbitNestConstants.accessTokenKey),
         _secureStorage.delete(key: OrbitNestConstants.refreshTokenKey),
       ]);
-      
+
       // Clear cached tokens
       _cachedAccessToken = null;
       _cachedRefreshToken = null;
     } catch (e) {
       // Ignore errors when clearing
+    } finally {
+      // Sign-out is done — a later sign-in must be able to refresh again.
+      _isSigningOut = false;
     }
   }
 
