@@ -117,22 +117,36 @@ class AuthInterceptor extends Interceptor {
               receiveTimeout: err.requestOptions.receiveTimeout,
             ));
 
-            final response = await dio.request(
-              err.requestOptions.path,
-              options: Options(
-                method: err.requestOptions.method,
-                headers: err.requestOptions.headers,
-              ),
-              data: err.requestOptions.data,
-              queryParameters: err.requestOptions.queryParameters,
-            );
+            try {
+              final response = await dio.request(
+                err.requestOptions.path,
+                options: Options(
+                  method: err.requestOptions.method,
+                  headers: err.requestOptions.headers,
+                ),
+                data: err.requestOptions.data,
+                queryParameters: err.requestOptions.queryParameters,
+              );
 
-            handler.resolve(response);
-            return;
+              handler.resolve(response);
+              return;
+            } on DioException catch (retryErr) {
+              // Refresh succeeded but the retried request still 401'd —
+              // the server has decisively rejected this session.
+              if (retryErr.response?.statusCode == 401 ||
+                  retryErr.response?.statusCode == 403) {
+                _tokenManager.notifySessionExpired();
+              }
+              rethrow;
+            }
           }
         }
+        // Refresh returned false → refresh-token itself is no longer accepted.
+        _tokenManager.notifySessionExpired();
       } catch (_) {
-        // Refresh failed, proceed with original error
+        // Refresh threw — treat as a final 401. notifySessionExpired() is
+        // idempotent so it's safe to call again here.
+        _tokenManager.notifySessionExpired();
       }
     }
 

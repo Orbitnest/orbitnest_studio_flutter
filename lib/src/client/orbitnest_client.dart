@@ -190,6 +190,16 @@ class OrbitNestClient {
   /// Get the analytics API — track events, screens, crashes, and user identity.
   OrbitNestAnalytics get analytics => _analytics;
 
+  /// Stream that emits whenever the server has decisively rejected the
+  /// current session — e.g. a 401 on a data/edge-function call that even a
+  /// token refresh could not recover from. Host apps should listen here and
+  /// force the user to the sign-in flow when it fires.
+  ///
+  /// ```dart
+  /// client.onSessionExpired.listen((_) => authBloc.add(ForceLogout()));
+  /// ```
+  Stream<void> get onSessionExpired => _tokenManager.onSessionExpired;
+
   // ============================
   // Direct Function Methods (Supabase-style API)
   // ============================

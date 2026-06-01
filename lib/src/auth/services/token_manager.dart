@@ -1,3 +1,4 @@
+import 'dart:async';
 import 'dart:convert';
 import 'package:crypto/crypto.dart';
 import 'package:flutter_secure_storage/flutter_secure_storage.dart';
@@ -40,6 +41,40 @@ class TokenManager {
     : _projectSlug = projectSlug,
       _apiKey = apiKey;
 
+  // ── Session-expiry signal ──────────────────────────────────────────────────
+  //
+  // Broadcasts when the server has rejected our session AFTER a token refresh
+  // has already been attempted. Subscribers (typically the host app's auth
+  // bloc) should treat this as the authoritative signal to force the user
+  // back to the sign-in flow. Fired exactly once per logical expiry — callers
+  // should not de-dup themselves.
+  final StreamController<void> _sessionExpiredController =
+      StreamController<void>.broadcast();
+  bool _sessionExpiredFired = false;
+
+  /// Stream that emits when the session has been definitively rejected by the
+  /// server (e.g. a 401 that even a refresh attempt could not recover). Use
+  /// this to trigger a force-logout in the host application.
+  Stream<void> get onSessionExpired => _sessionExpiredController.stream;
+
+  /// Called by [AuthInterceptor] after a 401 where the refresh-retry also
+  /// failed. Fires the [onSessionExpired] stream once until the next
+  /// successful session is stored.
+  void notifySessionExpired() {
+    if (_sessionExpiredFired) return;
+    _sessionExpiredFired = true;
+    if (!_sessionExpiredController.isClosed) {
+      _sessionExpiredController.add(null);
+    }
+  }
+
+  /// Dispose the broadcast controller — call when the client is torn down.
+  Future<void> dispose() async {
+    if (!_sessionExpiredController.isClosed) {
+      await _sessionExpiredController.close();
+    }
+  }
+
   /// Store session securely.
   Future<void> storeSession(Session session) async {
     if (session.accessToken.isEmpty) {
@@ -54,6 +89,9 @@ class TokenManager {
     // session the server just confirmed as valid.
     _cachedAccessToken = session.accessToken;
     _cachedRefreshToken = session.refreshToken;
+    // A fresh session arrived — re-arm the session-expired signal so a future
+    // 401 on this new session fires the stream again.
+    _sessionExpiredFired = false;
 
     try {
       final sessionJson = json.encode(session.toJson());
