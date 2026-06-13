@@ -67,7 +67,32 @@ class EnvConfig {
     // Allow an env-var override for local development
     final envUrl = _initialized ? dotenv.env['ORBITNEST_API_URL'] : null;
     final raw = (envUrl != null && envUrl.isNotEmpty) ? envUrl : kBaseUrl;
-    return resolveUrl(raw);
+    return resolveUrl(_enforceSecureScheme(raw));
+  }
+
+  /// Reject a cleartext `http://` base URL unless the host is loopback.
+  ///
+  /// Localhost/127.0.0.1 over http is allowed for local development. Any other
+  /// `http://` host would transmit the apikey and bearer tokens in cleartext,
+  /// so we warn loudly and fall back to the secure [kBaseUrl] default.
+  static String _enforceSecureScheme(String url) {
+    final uri = Uri.tryParse(url);
+    if (uri == null) return url;
+    if (uri.scheme != 'http') return url; // https / ws-less / etc. are fine
+
+    final host = uri.host;
+    final isLoopback = host == 'localhost' ||
+        host == '127.0.0.1' ||
+        host == '::1' ||
+        host == kAndroidEmulatorHost;
+    if (isLoopback) return url; // cleartext loopback is acceptable for dev
+
+    debugPrint(
+      'OrbitNest SECURITY WARNING: ORBITNEST_API_URL "$url" uses cleartext '
+      'http:// for a non-loopback host. Credentials would be sent unencrypted. '
+      'Falling back to the secure default "$kBaseUrl". Use https://.',
+    );
+    return kBaseUrl;
   }
 
   /// Get anonymous key
@@ -78,12 +103,6 @@ class EnvConfig {
       throw Exception('ORBITNEST_ANON_KEY is required in .env file');
     }
     return key;
-  }
-
-  /// Get service role key (optional)
-  static String? get serviceRoleKey {
-    _ensureInitialized();
-    return dotenv.env['ORBITNEST_SERVICE_ROLE_KEY'];
   }
 
   /// Decode and return the project slug embedded in the anon key JWT payload.

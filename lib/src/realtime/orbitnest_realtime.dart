@@ -23,8 +23,12 @@ class OrbitNestRealtime {
     required String apiKey,
     String? userJwt,
   }) : _manager = RealtimeChannelManager(
+          // Keep only the project slug in the URL. The apikey is passed via the
+          // WebSocket subprotocol (see RealtimeChannelManager) instead of the
+          // query string so it is not written to proxy / gateway access logs.
           wsUrl: '${baseUrl.replaceFirst(RegExp(r'^http'), 'ws')}'
-              '/realtime/v1/ws?project=$projectSlug&apikey=$apiKey',
+              '/realtime/v1/ws?project=$projectSlug',
+          apiKey: apiKey,
           userJwt: userJwt,
         );
 

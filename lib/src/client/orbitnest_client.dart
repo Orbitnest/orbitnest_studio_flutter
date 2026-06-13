@@ -24,7 +24,6 @@ class OrbitNestClient {
   late final String _baseUrl;
   late final String _projectSlug;
   late final String _anonKey;
-  late final String? _serviceRoleKey;
   late final OrbitNestHttpClient _httpClient;
   late final TokenManager _tokenManager;
 
@@ -56,11 +55,9 @@ class OrbitNestClient {
     required String baseUrl,
     required String projectSlug,
     required String anonKey,
-    String? serviceRoleKey,
   })  : _baseUrl = baseUrl,
         _projectSlug = projectSlug,
-        _anonKey = anonKey,
-        _serviceRoleKey = serviceRoleKey {
+        _anonKey = anonKey {
     _initialize();
   }
 
@@ -70,9 +67,13 @@ class OrbitNestClient {
   /// The base URL is hardcoded to `https://api.orbitnest.io` and the project
   /// slug is automatically decoded from the anon key JWT payload — no other
   /// env vars are needed.
+  ///
+  /// SECURITY: this is a client SDK. Only the public, RLS-protected anon key
+  /// belongs in a mobile app. The service-role key is a server-side admin
+  /// credential and must NEVER be bundled into a shipped app — it is not
+  /// accepted here by design.
   factory OrbitNestClient.create({
     String? anonKey,
-    String? serviceRoleKey,
   }) {
     if (!EnvConfig.isInitialized) {
       throw Exception(
@@ -87,7 +88,6 @@ class OrbitNestClient {
       baseUrl: EnvConfig.baseUrl,
       projectSlug: resolvedSlug,
       anonKey: resolvedAnonKey,
-      serviceRoleKey: serviceRoleKey ?? EnvConfig.serviceRoleKey,
     );
   }
 
@@ -342,9 +342,6 @@ class OrbitNestClient {
 
   /// Get the anonymous key
   String get anonKey => _anonKey;
-
-  /// Get the service role key
-  String? get serviceRoleKey => _serviceRoleKey;
 
   /// Close the client and clean up resources
   void dispose() {

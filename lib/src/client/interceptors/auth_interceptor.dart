@@ -69,11 +69,15 @@ class AuthInterceptor extends Interceptor {
             err.requestOptions.headers['Authorization'] = 'Bearer $apiKey';
             err.requestOptions.headers['apikey'] = apiKey;
 
-            // Create a new Dio instance with the same base URL to avoid infinite loops
+            // Create a new Dio instance with the same base URL to avoid infinite loops.
+            // Mirror the main client's redirect hardening (http_client.dart) so the
+            // credential headers below are never forwarded to a redirect target host.
             final dio = Dio(BaseOptions(
               baseUrl: err.requestOptions.baseUrl,
               connectTimeout: err.requestOptions.connectTimeout,
               receiveTimeout: err.requestOptions.receiveTimeout,
+              followRedirects: false,
+              maxRedirects: 0,
             ));
 
             final response = await dio.request(
@@ -110,11 +114,15 @@ class AuthInterceptor extends Interceptor {
               err.requestOptions.headers['apikey'] = apiKey;
             }
 
-            // Create a new Dio instance with the same base URL to avoid infinite loops
+            // Create a new Dio instance with the same base URL to avoid infinite loops.
+            // Mirror the main client's redirect hardening (http_client.dart) so the
+            // refreshed bearer + apikey are never forwarded to a redirect target host.
             final dio = Dio(BaseOptions(
               baseUrl: err.requestOptions.baseUrl,
               connectTimeout: err.requestOptions.connectTimeout,
               receiveTimeout: err.requestOptions.receiveTimeout,
+              followRedirects: false,
+              maxRedirects: 0,
             ));
 
             try {

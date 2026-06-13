@@ -280,6 +280,7 @@ const int _kWsCloseRateLimited = 4029;
 
 class RealtimeChannelManager {
   final String wsUrl;
+  final String? apiKey;
   final String? userJwt;
 
   WebSocketChannel? _ws;
@@ -289,7 +290,7 @@ class RealtimeChannelManager {
   int _reconnectDelayMs = _kBaseReconnectDelayMs;
   Timer? _reconnectTimer;
 
-  RealtimeChannelManager({required this.wsUrl, this.userJwt});
+  RealtimeChannelManager({required this.wsUrl, this.apiKey, this.userJwt});
 
   // ─── Lifecycle ───────────────────────────────────────────────────────────────
 
@@ -297,7 +298,10 @@ class RealtimeChannelManager {
     if (_ws != null) return;
 
     final uri = Uri.parse(wsUrl);
+    // Pass credentials via WS subprotocols rather than the URL query string so
+    // they are not captured in proxy / gateway access logs.
     final protocols = ['orbitnest-realtime-v1'];
+    if (apiKey != null) protocols.add('orbitnest.apikey.$apiKey');
     if (userJwt != null) protocols.add('orbitnest.user-jwt.$userJwt');
 
     _ws = WebSocketChannel.connect(uri, protocols: protocols);

@@ -54,8 +54,11 @@ class LoggingInterceptor extends Interceptor {
       response.statusCode ?? 0,
       response.requestOptions.uri.toString(),
       {
-        'headers': response.headers.map,
-        if (response.data != null) 'data': _truncateData(response.data),
+        'headers': _sanitizeHeaders(response.headers.map),
+        // Redact secrets (e.g. access_token / refresh_token returned by
+        // /auth/* endpoints) BEFORE truncating, so tokens never hit the log.
+        if (response.data != null)
+          'data': _truncateData(_sanitizeData(response.data)),
       },
     );
   }

@@ -76,19 +76,18 @@ cp .env.example .env
 
 2. Fill in your OrbitNest Studio project details in `.env`:
 ```env
-ORBITNEST_BASE_URL=http://localhost:3001
-ORBITNEST_PROJECT_SLUG=your-project-slug
+# Only the public, RLS-protected anon key belongs in a client app.
+# The project slug and API base URL are decoded from the anon key at runtime.
 ORBITNEST_ANON_KEY=your-anon-key
-ORBITNEST_SERVICE_ROLE_KEY=your-service-role-key
 ORBITNEST_DEBUG=true
 ```
 
-3. Add `.env` to your `pubspec.yaml` assets:
-```yaml
-flutter:
-  assets:
-    - .env
-```
+> ⚠️ **Security:** This is a client SDK. Only the public, RLS-protected
+> **anon key** belongs in a mobile app. **Never** put a service-role (admin)
+> key in a client build or in any file that gets bundled into the app —
+> that credential is server-side only. Anything shipped as a Flutter asset
+> (including a bundled `.env`) is packaged verbatim inside the APK/IPA and is
+> trivially extractable, so it must never contain a secret beyond the anon key.
 
 ## 🚀 Quick Start
 
@@ -103,10 +102,10 @@ await EnvConfig.initialize();
 // Create client using environment variables
 final orbitnest = OrbitNestClient.create();
 
-// Or override specific values
+// Or pass the anon key explicitly (the base URL and project slug are
+// decoded from the anon key JWT automatically).
 final orbitnest = OrbitNestClient.create(
-  projectUrl: 'https://custom-url.com',
-  // Other values will come from .env
+  anonKey: 'your-anon-key',
 );
 ```
 
@@ -1705,14 +1704,15 @@ final response = await orbitnest
 ### Environment Configuration
 
 ```bash
-# Production .env
-ORBITNEST_BASE_URL=https://your-production-api.com
-ORBITNEST_PROJECT_SLUG=your-production-project
+# Production .env — client apps ship ONLY the public anon key.
+# The project slug and API base URL are decoded from the anon key at runtime.
 ORBITNEST_ANON_KEY=your-production-anon-key
-ORBITNEST_SERVICE_ROLE_KEY=your-production-service-key
 ORBITNEST_DEBUG=false
 ORBITNEST_API_TIMEOUT=60000
 ```
+
+> ⚠️ Do **not** add a service-role / admin key here. It is a server-side
+> credential and would be extractable from the shipped binary.
 
 ### Security Best Practices
 
@@ -1795,8 +1795,8 @@ Main client for interacting with OrbitNest Studio APIs.
 
 ```dart
 class OrbitNestClient {
-  // Factory constructors
-  factory OrbitNestClient.create({String? projectUrl, String? projectSlug, String? anonKey, String? serviceRoleKey});
+  // Factory constructors — client apps pass only the public anon key.
+  factory OrbitNestClient.create({String? anonKey});
   
   // Core services
   AuthBloc get auth;
@@ -1999,8 +1999,6 @@ class EnvConfig {
   static String get baseUrl;
   static String get projectSlug;
   static String get anonKey;
-  static String get serviceRoleKey;
-  static String get projectId;
   static bool get isDebugMode;
   static int get apiTimeout;
 }
