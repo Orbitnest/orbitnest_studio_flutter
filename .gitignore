@@ -52,3 +52,4 @@ build/
 
 # Internal docs — never publish (PRD, implementation notes, security audits)
 docs/
+.vscode/
