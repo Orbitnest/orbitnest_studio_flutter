@@ -49,3 +49,6 @@ build/
 .clinerules
 *.ai.md
 .ai/
+
+# Internal docs — never publish (PRD, implementation notes, security audits)
+docs/
