@@ -424,6 +424,96 @@ class OrbitNestAuth extends ChangeNotifier {
     return _tokenManager.decodeToken(token);
   }
 
+  // ─── SMS OTP (phone sign-in; project must have Twilio configured) ───
+
+  /// Send a one-time code to a phone number (E.164, e.g. `+15555550123`).
+  Future<Map<String, dynamic>> signInWithSms(String phone) async {
+    try {
+      return await _authService.signInWithSms(phone: phone);
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException.fromException(e);
+    }
+  }
+
+  /// Verify a phone OTP and sign in (creates the user on first sign-in).
+  /// Stores the resulting session.
+  Future<Map<String, dynamic>> verifySmsOtp({
+    required String phone,
+    required String code,
+  }) async {
+    try {
+      final res = await _authService.verifySmsOtp(phone: phone, code: code);
+      if (res.session != null) await _tokenManager.storeSession(res.session!);
+      return {'user': res.user?.toJson(), 'session': res.session?.toJson()};
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException.fromException(e);
+    }
+  }
+
+  // ─── MFA (TOTP / authenticator apps) ───
+
+  /// Begin TOTP enrollment — returns `secret`, `otpauth_url`, `qr_code`, `factor_id`.
+  Future<Map<String, dynamic>> enrollMfaTotp({String? friendlyName}) async {
+    try {
+      return await _authService.enrollMfaTotp(friendlyName: friendlyName);
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException.fromException(e);
+    }
+  }
+
+  /// Confirm a TOTP enrollment with the first code from the authenticator.
+  Future<Map<String, dynamic>> verifyMfaEnrollment({
+    required String factorId,
+    required String code,
+  }) async {
+    try {
+      return await _authService.verifyMfaEnrollment(factorId: factorId, code: code);
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException.fromException(e);
+    }
+  }
+
+  /// List the current user's MFA factors.
+  Future<List<dynamic>> listMfaFactors() async {
+    try {
+      return await _authService.listMfaFactors();
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException.fromException(e);
+    }
+  }
+
+  /// Remove an MFA factor.
+  Future<void> unenrollMfa({required String factorId}) async {
+    try {
+      await _authService.unenrollMfa(factorId: factorId);
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException.fromException(e);
+    }
+  }
+
+  /// Complete an MFA-gated sign-in. When `signInWithPassword` returns an
+  /// `mfa_required` challenge, call this with its `challenge_token` and a TOTP
+  /// code. Stores the resulting session.
+  Future<Map<String, dynamic>> verifyMfa({
+    required String challengeToken,
+    required String code,
+  }) async {
+    try {
+      final res = await _authService.verifyMfa(challengeToken: challengeToken, code: code);
+      if (res.session != null) await _tokenManager.storeSession(res.session!);
+      return {'user': res.user?.toJson(), 'session': res.session?.toJson()};
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException.fromException(e);
+    }
+  }
+
   @override
   void dispose() {
     _stateSubscription.cancel();

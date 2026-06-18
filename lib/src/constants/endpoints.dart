@@ -66,6 +66,24 @@ class Endpoints {
   static String projectVerifyToken(String projectId) =>
       '/api/projects/$projectId/auth/verify';
 
+  // SMS OTP (phone sign-in via the project's own Twilio)
+  static String projectSmsSendOtp(String projectId) =>
+      '/api/projects/$projectId/auth/sms/send-otp';
+  static String projectSmsVerifyOtp(String projectId) =>
+      '/api/projects/$projectId/auth/sms/verify-otp';
+
+  // MFA (TOTP / authenticator apps)
+  static String projectVerifyMfa(String projectId) =>
+      '/api/projects/$projectId/auth/verify-mfa';
+  static String projectMfaEnroll(String projectId) =>
+      '/api/projects/$projectId/auth/mfa/totp/enroll';
+  static String projectMfaVerifyEnroll(String projectId) =>
+      '/api/projects/$projectId/auth/mfa/totp/verify';
+  static String projectMfaFactors(String projectId) =>
+      '/api/projects/$projectId/auth/mfa/factors';
+  static String projectMfaFactor(String projectId, String factorId) =>
+      '/api/projects/$projectId/auth/mfa/factors/$factorId';
+
   // Passkey (WebAuthn) — project-user realm
   static String projectPasskeyRegisterOptions(String projectId) =>
       '/api/projects/$projectId/auth/passkey/register/options';

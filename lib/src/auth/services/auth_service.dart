@@ -466,4 +466,105 @@ class AuthService {
       throw AuthException.fromException(e);
     }
   }
+
+  // ─── SMS OTP (phone sign-in via the project's own Twilio) ───
+
+  /// Send a one-time code to a phone number (E.164, e.g. `+15555550123`).
+  Future<Map<String, dynamic>> signInWithSms({required String phone}) async {
+    try {
+      final response = await _httpClient.post(
+        Endpoints.projectSmsSendOtp(_projectSlug),
+        data: {'phone': phone},
+      );
+      return Map<String, dynamic>.from(response.data as Map);
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  /// Verify a phone OTP and sign in (creates the user on first sign-in).
+  Future<AuthResponse> verifySmsOtp({
+    required String phone,
+    required String code,
+  }) async {
+    try {
+      final response = await _httpClient.post(
+        Endpoints.projectSmsVerifyOtp(_projectSlug),
+        data: {'phone': phone, 'code': code},
+      );
+      return AuthResponse.fromJson(response.data);
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  // ─── MFA (TOTP / authenticator apps) ───
+
+  /// Begin TOTP enrollment — returns `secret`, `otpauth_url`, `qr_code`, `factor_id`.
+  Future<Map<String, dynamic>> enrollMfaTotp({String? friendlyName}) async {
+    try {
+      final response = await _httpClient.post(
+        Endpoints.projectMfaEnroll(_projectSlug),
+        data: {if (friendlyName != null) 'friendly_name': friendlyName},
+      );
+      return Map<String, dynamic>.from(response.data as Map);
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  /// Confirm a TOTP enrollment with the first code from the authenticator.
+  Future<Map<String, dynamic>> verifyMfaEnrollment({
+    required String factorId,
+    required String code,
+  }) async {
+    try {
+      final response = await _httpClient.post(
+        Endpoints.projectMfaVerifyEnroll(_projectSlug),
+        data: {'factor_id': factorId, 'code': code},
+      );
+      return Map<String, dynamic>.from(response.data as Map);
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  /// List the current user's MFA factors.
+  Future<List<dynamic>> listMfaFactors() async {
+    try {
+      final response = await _httpClient.get(
+        Endpoints.projectMfaFactors(_projectSlug),
+      );
+      return List<dynamic>.from(response.data as List);
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  /// Remove an MFA factor.
+  Future<void> unenrollMfa({required String factorId}) async {
+    try {
+      await _httpClient.delete(
+        Endpoints.projectMfaFactor(_projectSlug, factorId),
+      );
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
+  /// Complete an MFA-gated sign-in with the challenge token and a TOTP code.
+  Future<AuthResponse> verifyMfa({
+    required String challengeToken,
+    required String code,
+  }) async {
+    try {
+      final response = await _httpClient.post(
+        Endpoints.projectVerifyMfa(_projectSlug),
+        data: {'challenge_token': challengeToken, 'code': code},
+      );
+      return AuthResponse.fromJson(response.data);
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
 }

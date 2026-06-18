@@ -167,6 +167,49 @@ class OrbitNestDatabase extends ChangeNotifier {
     );
   }
 
+  /// Vector similarity search (pgvector). Returns rows ordered by distance from
+  /// [vector], closest first. Requires `CREATE EXTENSION vector` and a `vector`
+  /// column. [metric]: `l2` (default, `<->`), `cosine` (`<=>`), or `ip` (`<#>`).
+  ///
+  /// ```dart
+  /// final res = await db.vectorSearch('documents', 'embedding', queryEmbedding,
+  ///     metric: 'cosine', limit: 5);
+  /// ```
+  Future<PostgrestResponse<Map<String, dynamic>>> vectorSearch(
+    String table,
+    String column,
+    List<double> vector, {
+    String columns = '*',
+    String metric = 'l2',
+    int limit = 10,
+  }) async {
+    final safe = RegExp(r'^[A-Za-z_][A-Za-z0-9_]*$');
+    if (!safe.hasMatch(table) || !safe.hasMatch(column)) {
+      throw ArgumentError('vectorSearch: unsafe table/column identifier');
+    }
+    final op = metric == 'cosine'
+        ? '<=>'
+        : metric == 'ip'
+            ? '<#>'
+            : '<->';
+    final vec = '[${vector.join(',')}]';
+    final cols = columns == '*'
+        ? '*'
+        : columns.split(',').map((c) => '"${c.trim()}"').join(', ');
+    final sql =
+        'SELECT $cols FROM "$table" ORDER BY "$column" $op \$1::vector LIMIT $limit';
+
+    final result = await _executeWithCompleter<PostgrestResponse<dynamic>>(
+      DatabaseExecuteSqlEvent(sql: sql, parameters: [vec]),
+    );
+
+    return PostgrestResponse<Map<String, dynamic>>(
+      data: List<Map<String, dynamic>>.from(result.data),
+      count: result.count,
+      error: result.error,
+    );
+  }
+
   /// Insert data into a table
   Future<PostgrestResponse<Map<String, dynamic>>> insert(
     String table,
