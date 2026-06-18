@@ -187,6 +187,12 @@ class Endpoints {
   static String projectJobRuns(String projectId, String name) =>
       '/api/projects/$projectId/jobs/$name/runs';
 
+  // Database Migrations (server-side runner)
+  static String projectMigrationsRun(String projectSlug) =>
+      '/api/project/$projectSlug/migrations/run';
+  static String projectMigrationsStatus(String projectSlug) =>
+      '/api/project/$projectSlug/migrations/status';
+
   // Health Checks
   static const String databaseHealth = '/api/database/health';
 }

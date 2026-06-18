@@ -15,6 +15,7 @@ import '../edge_functions/repositories/functions_repository.dart';
 import '../edge_functions/services/functions_service.dart';
 import '../edge_functions/orbitnest_functions.dart';
 import '../jobs/services/jobs_service.dart';
+import '../migrations/services/migration_service.dart';
 import '../realtime/orbitnest_realtime.dart';
 import '../utils/env_config.dart';
 import 'http_client.dart';
@@ -32,6 +33,7 @@ class OrbitNestClient {
   late final DatabaseService _databaseService;
   late final FunctionsService _functionsService;
   late final JobsService _jobsService;
+  late final MigrationService _migrationService;
   late final AnalyticsService _analyticsService;
 
   // Repositories
@@ -128,6 +130,11 @@ class OrbitNestClient {
       projectSlug: _projectSlug,
     );
 
+    _migrationService = MigrationService(
+      httpClient: _httpClient,
+      projectSlug: _projectSlug,
+    );
+
     _analyticsService = AnalyticsService(
       httpClient: _httpClient,
       baseUrl: _baseUrl,
@@ -186,6 +193,10 @@ class OrbitNestClient {
 
   /// Get the background jobs API (admin only)
   JobsService get jobs => _jobsService;
+
+  /// Get the migrations API — trigger a server-side migration run and read
+  /// status. The SDK never executes migrations on-device.
+  MigrationService get migrations => _migrationService;
 
   /// Get the analytics API — track events, screens, crashes, and user identity.
   OrbitNestAnalytics get analytics => _analytics;

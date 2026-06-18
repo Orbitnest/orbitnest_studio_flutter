@@ -30,6 +30,13 @@ export 'src/jobs/models/job_response.dart';
 export 'src/jobs/services/jobs_service.dart';
 export 'src/jobs/exceptions/job_exception.dart';
 
+// Database Migrations — trigger server-side runs, read status, display logs
+// (the Flutter SDK never executes migrations itself).
+export 'src/migrations/models/migration_models.dart';
+export 'src/migrations/services/migration_service.dart';
+export 'src/migrations/exceptions/migration_exception.dart';
+export 'src/migrations/migration_log_controller.dart';
+
 // Realtime — live DB subscriptions, broadcasts, and presence
 export 'src/realtime/orbitnest_realtime.dart';
 
