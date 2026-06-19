@@ -1,3 +1,21 @@
+## [1.6.0]
+
+### Fixed
+- **MFA sign-in challenge is now surfaced.** When an account has a verified MFA
+  factor, `signInWithPassword` previously threw `Sign in failed` and dropped the
+  server's `challenge_token`, making it impossible to complete an MFA-gated login.
+  It now returns `{ mfa_required: true, challenge_token, factors }` (no session) —
+  pass `challenge_token` to `verifyMfa(challengeToken:, code:)` to finish signing in.
+- **`verifyMfa` now updates auth state.** It previously stored the session token
+  but left `isAuthenticated`/`currentUser`/`currentSession` and the
+  `onAuthStateChange` stream unchanged, so apps couldn't tell the user had logged
+  in. It now transitions to the authenticated state like a normal sign-in.
+
+### Added
+- `AuthResponse` now exposes `mfaRequired`, `challengeToken`, `mfaFactors`, and an
+  `isMfaRequired` getter.
+- New `AuthMfaRequiredState` for apps that drive auth via the BLoC stream directly.
+
 ## [1.5.1]
 
 ### Changed

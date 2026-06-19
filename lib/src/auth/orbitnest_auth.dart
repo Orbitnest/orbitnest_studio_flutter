@@ -73,6 +73,16 @@ class OrbitNestAuth extends ChangeNotifier {
       case AuthUnauthenticatedState():
         _completePendingOperation('unauthenticated', null);
         break;
+      case AuthMfaRequiredState(:final challengeToken, :final factors):
+        // Resolve the pending signInWithPassword with the challenge instead of
+        // throwing — the caller checks `mfa_required` and follows up with
+        // verifyMfa(challengeToken:, code:).
+        _completePendingOperation('auth_success', {
+          'mfa_required': true,
+          'challenge_token': challengeToken,
+          'factors': factors,
+        });
+        break;
       case AuthPasskeyRegisteredState(:final device):
         _completePendingOperation('passkey_registered', device.toJson());
         break;
@@ -234,8 +244,18 @@ class OrbitNestAuth extends ChangeNotifier {
     );
   }
 
-  /// Traditional signin with email and password
-  /// Returns user and session when successful
+  /// Traditional signin with email and password.
+  ///
+  /// Returns `{ user, session }` when successful. If the account has a verified
+  /// MFA factor, instead returns `{ mfa_required: true, challenge_token, factors }`
+  /// (no session) — pass the `challenge_token` to [verifyMfa] with a TOTP or
+  /// recovery code to finish signing in:
+  /// ```dart
+  /// final res = await auth.signInWithPassword(email: e, password: p);
+  /// if (res['mfa_required'] == true) {
+  ///   await auth.verifyMfa(challengeToken: res['challenge_token'], code: code);
+  /// }
+  /// ```
   Future<Map<String, dynamic>> signInWithPassword({
     required String email,
     required String password,
@@ -515,14 +535,13 @@ class OrbitNestAuth extends ChangeNotifier {
     required String challengeToken,
     required String code,
   }) async {
-    try {
-      final res = await _authService.verifyMfa(challengeToken: challengeToken, code: code);
-      if (res.session != null) await _tokenManager.storeSession(res.session!);
-      return {'user': res.user?.toJson(), 'session': res.session?.toJson()};
-    } catch (e) {
-      if (e is AuthException) rethrow;
-      throw AuthException.fromException(e);
-    }
+    // Route through the BLoC so a successful verify transitions auth state to
+    // AuthAuthenticatedState — updating isAuthenticated, currentUser/currentSession,
+    // and the onAuthStateChange stream — exactly like a password sign-in.
+    return await _executeWithCompleter<Map<String, dynamic>>(
+      'auth_success',
+      AuthVerifyMfaEvent(challengeToken: challengeToken, code: code),
+    );
   }
 
   @override

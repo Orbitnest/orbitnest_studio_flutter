@@ -67,6 +67,18 @@ class AuthSignInWithPasswordEvent extends AuthEvent {
   final String password;
 }
 
+/// Complete an MFA-gated sign-in by exchanging the challenge token + a TOTP or
+/// recovery code for a session.
+class AuthVerifyMfaEvent extends AuthEvent {
+  const AuthVerifyMfaEvent({
+    required this.challengeToken,
+    required this.code,
+  });
+
+  final String challengeToken;
+  final String code;
+}
+
 // Session management
 class AuthSignOutEvent extends AuthEvent {
   const AuthSignOutEvent();

@@ -31,6 +31,7 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
     on<AuthVerifySignInEvent>(_onVerifySignIn);
     on<AuthSignUpEvent>(_onSignUp);
     on<AuthSignInWithPasswordEvent>(_onSignInWithPassword);
+    on<AuthVerifyMfaEvent>(_onVerifyMfa);
     on<AuthSignOutEvent>(_onSignOut);
     on<AuthRefreshSessionEvent>(_onRefreshSession);
     on<AuthUpdateUserEvent>(_onUpdateUser);
@@ -272,8 +273,48 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
             session: response.session!,
           ),
         );
+      } else if (response.isMfaRequired) {
+        // Account has a verified second factor — withhold the session and
+        // surface the challenge so the caller can complete it via verifyMfa.
+        emit(
+          AuthMfaRequiredState(
+            challengeToken: response.challengeToken!,
+            factors: response.mfaFactors,
+          ),
+        );
       } else {
         emit(AuthErrorState(message: response.message ?? 'Sign in failed'));
+      }
+    } catch (e) {
+      emit(
+        AuthErrorState(message: _getErrorMessage(e), code: _getErrorCode(e)),
+      );
+    }
+  }
+
+  Future<void> _onVerifyMfa(
+    AuthVerifyMfaEvent event,
+    Emitter<AuthState> emit,
+  ) async {
+    emit(const AuthLoadingState());
+
+    try {
+      final response = await _authRepository.verifyMfa(
+        challengeToken: event.challengeToken,
+        code: event.code,
+      );
+
+      if (response.isAuthenticated) {
+        await _tokenManager.storeSession(response.session!);
+        emit(
+          AuthAuthenticatedState(
+            user: response.user!,
+            session: response.session!,
+          ),
+        );
+      } else {
+        emit(AuthErrorState(
+            message: response.message ?? 'MFA verification failed'));
       }
     } catch (e) {
       emit(

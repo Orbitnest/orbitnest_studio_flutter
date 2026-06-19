@@ -29,6 +29,19 @@ class AuthUnauthenticatedState extends AuthState {
   const AuthUnauthenticatedState();
 }
 
+/// The password step succeeded but the account has a verified MFA factor, so a
+/// second factor is required before a session is issued. Complete the sign-in
+/// by calling `OrbitNestAuth.verifyMfa(challengeToken:, code:)`.
+class AuthMfaRequiredState extends AuthState {
+  const AuthMfaRequiredState({
+    required this.challengeToken,
+    this.factors,
+  });
+
+  final String challengeToken;
+  final List<dynamic>? factors;
+}
+
 class AuthOtpSentState extends AuthState {
   const AuthOtpSentState({
     required this.email,

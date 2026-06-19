@@ -12,6 +12,9 @@ class AuthResponse {
     this.emailOtp,
     this.smsOtp,
     this.actionLink,
+    this.mfaRequired,
+    this.challengeToken,
+    this.mfaFactors,
   });
 
   final User? user;
@@ -22,6 +25,20 @@ class AuthResponse {
   final String? emailOtp;
   final String? smsOtp;
   final String? actionLink;
+
+  /// True when the account has a verified MFA factor and the password step
+  /// succeeded but a second factor is still required. The session is withheld
+  /// until [challengeToken] is exchanged via `verifyMfa`.
+  final bool? mfaRequired;
+
+  /// Short-lived token identifying the pending MFA challenge. Pass it to
+  /// `OrbitNestAuth.verifyMfa(challengeToken:, code:)` with a TOTP or recovery
+  /// code to finish signing in. Non-null only when [mfaRequired] is true.
+  final String? challengeToken;
+
+  /// The enrolled factors for the challenged account (e.g. `[{type: 'totp'}]`),
+  /// for UIs that want to label the second-factor prompt.
+  final List<dynamic>? mfaFactors;
 
   factory AuthResponse.fromJson(Map<String, dynamic> json) {
     try {
@@ -65,6 +82,9 @@ class AuthResponse {
         emailOtp: json['email_otp'] as String?,
         smsOtp: json['sms_otp'] as String?,
         actionLink: json['action_link'] as String?,
+        mfaRequired: json['mfa_required'] as bool?,
+        challengeToken: json['challenge_token'] as String?,
+        mfaFactors: json['factors'] as List<dynamic>?,
       );
     } catch (e, stackTrace) {
       // Provide better error information for debugging
@@ -90,6 +110,9 @@ class AuthResponse {
 
   /// Check if the response indicates successful authentication
   bool get isAuthenticated => user != null && session != null;
+
+  /// Check if the response is an MFA challenge (second factor still required).
+  bool get isMfaRequired => mfaRequired == true && challengeToken != null;
 
   /// Check if OTP was sent
   bool get isOtpSent => otpSent == true;

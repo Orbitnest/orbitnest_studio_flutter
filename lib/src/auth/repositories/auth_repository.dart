@@ -102,6 +102,21 @@ class AuthRepository {
     }
   }
 
+  /// Complete an MFA-gated sign-in with the challenge token + TOTP/recovery code.
+  Future<AuthResponse> verifyMfa({
+    required String challengeToken,
+    required String code,
+  }) async {
+    try {
+      return await _authService.verifyMfa(
+        challengeToken: challengeToken,
+        code: code,
+      );
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
   /// Sign out the current user
   Future<void> signOut() async {
     try {
