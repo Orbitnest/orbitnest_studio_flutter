@@ -10,11 +10,6 @@ import '../../utils/logger.dart';
 /// Manages authentication tokens and session persistence
 class TokenManager {
   static const FlutterSecureStorage _secureStorage = FlutterSecureStorage(
-    aOptions: AndroidOptions(
-      encryptedSharedPreferences: true,
-      keyCipherAlgorithm: KeyCipherAlgorithm.RSA_ECB_PKCS1Padding,
-      storageCipherAlgorithm: StorageCipherAlgorithm.AES_GCM_NoPadding,
-    ),
     iOptions: IOSOptions(
       accessibility: KeychainAccessibility.first_unlock_this_device,
       synchronizable: false,

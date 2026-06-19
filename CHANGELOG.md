@@ -1,3 +1,15 @@
+## [1.5.1]
+
+### Changed
+- Widened dependency constraints to support the latest stable releases of `flutter_bloc` (9.x), `flutter_dotenv` (6.x), and `flutter_secure_storage` (10.x).
+- Raised the `dio` lower bound to `^5.5.0` (required for `DioMediaType`).
+
+### Removed
+- Dropped deprecated `flutter_secure_storage` Android cipher options; data migrates automatically.
+
+### Added
+- Added an `example/` with a minimal usage sample.
+
 ## [1.5.0]
 
 ### Added

@@ -35,17 +35,17 @@ class PasskeyAuthenticatorService {
       final response = await _authenticator.register(request);
       return response.toJson();
     } on PasskeyAuthCancelledException {
-      throw AuthException(
+      throw const AuthException(
         'Passkey registration was cancelled.',
         code: ErrorCodes.passkeyCancelled,
       );
     } on ExcludeCredentialsCanNotBeRegisteredException {
-      throw AuthException(
+      throw const AuthException(
         'A passkey is already registered for this device.',
         code: ErrorCodes.passkeyAlreadyExists,
       );
     } on DeviceNotSupportedException {
-      throw AuthException(
+      throw const AuthException(
         'This device does not support passkeys.',
         code: ErrorCodes.passkeyUnsupported,
       );
@@ -73,17 +73,17 @@ class PasskeyAuthenticatorService {
       final response = await _authenticator.authenticate(request);
       return response.toJson();
     } on NoCredentialsAvailableException {
-      throw AuthException(
+      throw const AuthException(
         'No passkey is available on this device.',
         code: ErrorCodes.passkeyNotAvailable,
       );
     } on PasskeyAuthCancelledException {
-      throw AuthException(
+      throw const AuthException(
         'Passkey sign-in was cancelled.',
         code: ErrorCodes.passkeyCancelled,
       );
     } on DeviceNotSupportedException {
-      throw AuthException(
+      throw const AuthException(
         'This device does not support passkeys.',
         code: ErrorCodes.passkeyUnsupported,
       );
