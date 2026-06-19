@@ -17,6 +17,7 @@ import '../edge_functions/orbitnest_functions.dart';
 import '../jobs/services/jobs_service.dart';
 import '../migrations/services/migration_service.dart';
 import '../realtime/orbitnest_realtime.dart';
+import '../storage/orbitnest_storage.dart';
 import '../utils/env_config.dart';
 import 'http_client.dart';
 
@@ -52,6 +53,7 @@ class OrbitNestClient {
   late final OrbitNestFunctions _functions;
   late final OrbitNestRealtime _realtime;
   late final OrbitNestAnalytics _analytics;
+  late final OrbitNestStorage _storage;
 
   OrbitNestClient._({
     required String baseUrl,
@@ -165,6 +167,11 @@ class OrbitNestClient {
       projectSlug: _projectSlug,
       apiKey: _anonKey,
     );
+    _storage = OrbitNestStorage(
+      httpClient: _httpClient,
+      baseUrl: _baseUrl,
+      projectSlug: _projectSlug,
+    );
   }
 
   /// Get the authentication API (simplified interface)
@@ -187,6 +194,10 @@ class OrbitNestClient {
   ///   ..subscribe();
   /// ```
   OrbitNestRealtime get realtime => _realtime;
+
+  /// Get the storage API — `client.storage.from('bucket').upload(...)`,
+  /// `download`, `list`, `remove`, and `getPublicUrl` (with image transforms).
+  OrbitNestStorage get storage => _storage;
 
   /// Convenience shortcut: create a realtime channel directly on the client.
   RealtimeChannel channel(String name) => _realtime.channel(name);

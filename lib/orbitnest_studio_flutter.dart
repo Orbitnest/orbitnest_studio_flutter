@@ -40,6 +40,9 @@ export 'src/migrations/migration_log_controller.dart';
 // Realtime — live DB subscriptions, broadcasts, and presence
 export 'src/realtime/orbitnest_realtime.dart';
 
+// Storage — upload/download/list/remove + public URLs with image transforms
+export 'src/storage/orbitnest_storage.dart';
+
 // Types and utilities
 export 'src/types/json_types.dart';
 export 'src/types/response_types.dart';
