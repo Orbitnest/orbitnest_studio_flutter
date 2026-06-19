@@ -529,6 +529,18 @@ class AuthService {
     }
   }
 
+  /// Regenerate the user's MFA recovery codes. Returns `{ codes: [...] }` once.
+  Future<Map<String, dynamic>> regenerateMfaRecoveryCodes() async {
+    try {
+      final response = await _httpClient.post(
+        Endpoints.projectMfaRecoveryCodes(_projectSlug),
+      );
+      return Map<String, dynamic>.from(response.data as Map);
+    } catch (e) {
+      throw AuthException.fromException(e);
+    }
+  }
+
   /// List the current user's MFA factors.
   Future<List<dynamic>> listMfaFactors() async {
     try {

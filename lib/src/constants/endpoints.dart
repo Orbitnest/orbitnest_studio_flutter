@@ -83,6 +83,8 @@ class Endpoints {
       '/api/projects/$projectId/auth/mfa/factors';
   static String projectMfaFactor(String projectId, String factorId) =>
       '/api/projects/$projectId/auth/mfa/factors/$factorId';
+  static String projectMfaRecoveryCodes(String projectId) =>
+      '/api/projects/$projectId/auth/mfa/recovery-codes';
 
   // Passkey (WebAuthn) — project-user realm
   static String projectPasskeyRegisterOptions(String projectId) =>

@@ -465,12 +465,23 @@ class OrbitNestAuth extends ChangeNotifier {
   }
 
   /// Confirm a TOTP enrollment with the first code from the authenticator.
+  /// On success the result includes `recovery_codes` (shown once).
   Future<Map<String, dynamic>> verifyMfaEnrollment({
     required String factorId,
     required String code,
   }) async {
     try {
       return await _authService.verifyMfaEnrollment(factorId: factorId, code: code);
+    } catch (e) {
+      if (e is AuthException) rethrow;
+      throw AuthException.fromException(e);
+    }
+  }
+
+  /// Regenerate the user's MFA recovery codes. Returns `{ codes: [...] }` once.
+  Future<Map<String, dynamic>> regenerateMfaRecoveryCodes() async {
+    try {
+      return await _authService.regenerateMfaRecoveryCodes();
     } catch (e) {
       if (e is AuthException) rethrow;
       throw AuthException.fromException(e);
