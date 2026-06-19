@@ -1,3 +1,28 @@
+## [1.5.0]
+
+### Added
+- **Storage client**: upload, download, list, remove, and `getPublicUrl` with image transforms.
+
+## [1.4.0]
+
+### Added
+- **MFA recovery codes**: `verifyMfaEnrollment` now surfaces `recovery_codes`, plus a new `regenerateMfaRecoveryCodes` method.
+
+## [1.3.0]
+
+### Added
+- **Multi-factor authentication (TOTP)**, **SMS OTP sign-in**, and **pgvector vector search**.
+
+## [1.2.0]
+
+### Added
+- **Migrations client**: trigger server-side migration runs, read status, and display logs (the SDK never executes migrations itself).
+
+## [1.1.0]
+
+### Added
+- **Analytics module** with batched event ingestion.
+
 ## [1.0.9] - 2026-02-23
 
 ### Added
