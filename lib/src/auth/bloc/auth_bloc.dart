@@ -359,22 +359,31 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         return;
       }
 
-      final response = await _authRepository.refreshSession(
-        refreshToken: refreshToken,
-      );
+      // Route through the TokenManager's de-duplicated refresh rather than
+      // calling the repository directly. The backend rotates refresh tokens
+      // single-use: two parallel /auth/refresh calls with the same token make
+      // one win (rotating + persisting a new token) and the other 401. If this
+      // bloc refresh raced a concurrent interceptor/proactive refresh and lost,
+      // the old code would `clearSession()` here — wiping the session the
+      // *winning* refresh had just persisted, dropping the user to the sign-in
+      // screen on the next cold start. Sharing the single in-flight request
+      // (TokenManager._pendingRefresh) means both callers see the same result
+      // and the race disappears. `_performTokenRefresh` stores the rotated
+      // session, so on success we re-read it to emit.
+      final refreshed = await _tokenManager.refreshSession();
 
-      if (response.isAuthenticated) {
-        await _tokenManager.storeSession(response.session!);
-        emit(
-          AuthAuthenticatedState(
-            user: response.user!,
-            session: response.session!,
-          ),
-        );
-      } else {
-        await _tokenManager.clearSession();
-        emit(const AuthUnauthenticatedState());
+      if (refreshed) {
+        final session = await _tokenManager.getStoredSession();
+        if (session != null) {
+          emit(
+            AuthAuthenticatedState(user: session.user, session: session),
+          );
+          return;
+        }
       }
+
+      await _tokenManager.clearSession();
+      emit(const AuthUnauthenticatedState());
     } catch (e) {
       await _tokenManager.clearSession();
       emit(const AuthUnauthenticatedState());
@@ -580,7 +589,17 @@ class AuthBloc extends Bloc<AuthEvent, AuthState> {
         return;
       }
 
-      final updatedSession = currentSession.copyWith(user: freshUser);
+      // Re-read the LATEST stored session before writing. The getUser() call
+      // above can trigger a token refresh (proactive, or 401→refresh in the
+      // interceptor), which rotates and persists a NEW refresh token. Merging
+      // the fresh user onto `currentSession` (captured *before* the call) and
+      // storing that would overwrite the rotated token with the now-invalid
+      // old one — silently breaking the next cold-start refresh. Merge onto
+      // whatever tokens are current instead, and skip entirely if the session
+      // was cleared meanwhile (e.g. a concurrent sign-out).
+      final latest = await _tokenManager.getStoredSession();
+      if (latest == null) return;
+      final updatedSession = latest.copyWith(user: freshUser);
       await _tokenManager.storeSession(updatedSession);
     } catch (e) {
       // Background user reconciliation failed (non-fatal)

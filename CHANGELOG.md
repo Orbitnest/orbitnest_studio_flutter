@@ -1,3 +1,24 @@
+## [1.6.1]
+
+### Fixed
+- **Session no longer lost on cold restart after a token refresh race.** The
+  AuthBloc's session-refresh handler called `/auth/refresh` directly instead of
+  through `TokenManager`'s de-duplicated refresh. Because the backend rotates
+  refresh tokens single-use, a refresh that raced a concurrent
+  interceptor/proactive refresh could *lose* the race, 401, and then clear the
+  session — even though the winning refresh had just persisted a valid rotated
+  token. All refresh paths now share one in-flight request, so the race is gone.
+  (Most visible right after registration, whose onboarding fires a burst of
+  parallel authenticated requests.)
+- **Background user reconciliation could clobber a rotated refresh token.**
+  `_reconcileStoredUserFromServer` wrote back a session snapshot captured *before*
+  its `getUser()` call; if that call refreshed the token, the stale token
+  overwrote the rotated one. It now re-reads the latest stored session before
+  merging the fresh user.
+- **`storeSession` no longer overwrites a valid refresh token with an empty one.**
+  A partial payload lacking a refresh token would otherwise make the next cold
+  start wipe the whole session; the existing refresh token is now preserved.
+
 ## [1.6.0]
 
 ### Fixed

@@ -77,6 +77,26 @@ class TokenManager {
       return;
     }
 
+    // Never overwrite a good refresh token with an empty one. Some payloads —
+    // a refresh response that echoes only an access token, or a session
+    // reconstructed from a source that dropped the refresh field — arrive with
+    // an empty refreshToken. Persisting that would make the very next cold start
+    // wipe the whole session, because getStoredSession() clears when the stored
+    // refresh token is empty. Fall back to the refresh token we already hold so
+    // a partial update can never destroy session persistence.
+    if (session.refreshToken.isEmpty) {
+      final existing = _cachedRefreshToken ??
+          await _secureStorage.read(key: OrbitNestConstants.refreshTokenKey);
+      if (existing != null && existing.isNotEmpty) {
+        OrbitNestLogger.error(
+          'storeSession: incoming session has empty refresh token — '
+          'preserving the existing one',
+          null,
+        );
+        session = session.copyWith(refreshToken: existing);
+      }
+    }
+
     // Update in-memory cache immediately — the next outbound request needs the
     // token now, before the secure-storage round-trip completes.  Doing this
     // first also means a transient storage failure (e.g. iOS keychain briefly
