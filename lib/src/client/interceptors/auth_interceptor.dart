@@ -162,11 +162,23 @@ class AuthInterceptor extends Interceptor {
   }
 
   bool _isAuthEndpoint(String path) {
-    // Only the specific public auth operations should skip the token.
-    // Broad path prefixes like '/api/projects/' must NOT appear here because
-    // they would also match authenticated endpoints such as /auth/user
-    // (profile update) and /auth/refresh, causing those calls to go out
-    // without a token and fail with 401.
+    // Public auth operations that authenticate via the request body (OTP,
+    // credentials, or a refresh token) rather than a Bearer access token —
+    // the interceptor must NOT attach a token to these.
+    //
+    // '/auth/refresh' is critical here: the server route is unguarded and
+    // authenticates off the refresh_token in the body, so it needs no Bearer.
+    // If it is NOT skipped, onRequest calls getAccessToken() for the refresh
+    // POST; on a cold start the access token is already expired, so
+    // getAccessToken() kicks off a *proactive* refresh which re-enters
+    // refreshSession() and awaits the very in-flight refresh future this POST
+    // belongs to — a self-deadlock that hangs the request until it fails and
+    // the session is cleared. That is the "logged out on every restart after
+    // 15 min" bug: the access token (15-min TTL) expires while the app is
+    // backgrounded, and the cold-start refresh can never complete.
+    //
+    // Use specific paths, never broad prefixes like '/api/projects/', so
+    // genuinely authenticated endpoints (e.g. '/auth/user') still get a token.
     const authPaths = [
       '/auth/signin',
       '/auth/signup',
@@ -174,6 +186,7 @@ class AuthInterceptor extends Interceptor {
       '/auth/verify',
       '/auth/recover',
       '/auth/reset-password',
+      '/auth/refresh',
     ];
 
     return authPaths.any((authPath) => path.contains(authPath));

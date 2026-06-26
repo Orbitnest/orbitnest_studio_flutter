@@ -1,3 +1,18 @@
+## [1.6.2]
+
+### Fixed
+- **Users no longer logged out on every app restart after ~15 minutes.** The
+  `/auth/refresh` route authenticates off the refresh token in the request body
+  and needs no Bearer access token, but `AuthInterceptor` wasn't skipping it.
+  On a cold start the stored access token is already expired (15-min TTL), so
+  attaching it to the refresh POST made `onRequest` trigger a *proactive*
+  refresh that re-entered the very in-flight refresh future the POST belonged
+  to — a self-deadlock. The refresh never completed, the session was cleared,
+  and the app dropped to the login screen. `/auth/refresh` is now treated as a
+  token-less auth endpoint, so the cold-start refresh completes cleanly and an
+  active user's session survives for the full refresh-token lifetime. Regression
+  test: `test/refresh_endpoint_no_token_test.dart`.
+
 ## [1.6.1]
 
 ### Fixed
